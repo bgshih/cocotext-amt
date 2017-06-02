@@ -1,0 +1,5 @@
+export const ZOOM_TO_FIT        = 'ZOOM_TO_FIT';
+export const RESET_ANNOTATIONS  = 'RESET_ANNOTATIONS';
+export const SUBMIT_ANNOTATIONS = 'SUBMIT_ANNOTATIONS';
+export const TOGGLE_HINTS       = 'TOGGLE_HINTS';
+export const DELETE_POLYGON     = 'DELETE_POLYGON';
