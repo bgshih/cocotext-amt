@@ -57,7 +57,7 @@ export class App extends Component {
     })
 
     // fetch task data and set state
-    const fetchUrl = window.location.origin + '/region/task/by-hit/' + urlParams['hitId'];
+    const fetchUrl = window.location.origin + '/poly-annot-task/by-hit/' + urlParams['hitId'];
     console.log('Fetching ' + fetchUrl);
     fetch(fetchUrl)
       .then((response) => response.json())
