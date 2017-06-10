@@ -1,23 +1,25 @@
 import React, { Component } from 'react';
 import './App.css';
-import { Grid, Row, Col, ListGroup, ListGroupItem } from 'react-bootstrap';
+import { Grid, Row, Col, ListGroup, ListGroupItem, Alert } from 'react-bootstrap';
+import update from 'immutability-helper';
+
 import { Toolbar } from './Toolbar';
 import { Card } from './Card';
 import SubmitModal from './SubmitModal';
 import InstructionModal from './InstructionModal';
-import update from 'immutability-helper';
+import * as constants from './constants';
 
 
 class App extends Component {
   constructor(props) {
     super(props);
-    this.urlParams = null;
 
     this.state = {
       cards: [],
       urlParams: null,
       showSubmitModal: false,
-      showInstructionModal: false
+      showInstructionModal: false,
+      previewMode: false,
     }
   }
 
@@ -45,21 +47,27 @@ class App extends Component {
     for (var k in urlParams) {
       console.log('key: ' + k + '; value: ' + urlParams[k]);
     }
+
+    if (!('hitId' in urlParams && 'assignmentId' in urlParams)) {
+      console.error('Invalid URL parameters');
+      return;
+    }
+
     this.setState({
-      urlParams: urlParams
+      urlParams: urlParams,
+      previewMode: (urlParams['assignmentId'] === 'ASSIGNMENT_ID_NOT_AVAILABLE')
     })
 
-    const fetchUrl = window.location.origin + '/poly-verif-task/by-hit/' + urlParams['hitId'];
+    const fetchUrl = constants.API_SERVER_URL + '/polyverif/' + urlParams['hitId'];
     fetch(fetchUrl)
       .then((response) => response.json())
       .then((tasksData) => {
+        const textInstancesData = tasksData.instances;
         var cards = [];
-        for (var task of tasksData) {
+        for (var textInstance of textInstancesData) {
           const card = {
-            id: task.id,
-            verification: task.verification,
-            imageUrl: task.imageUrl,
-            polygon: task.polygon,
+            instanceId: textInstance.id,
+            verificationStatus: textInstance.status
           }
           cards.push(card);
         }
@@ -88,6 +96,19 @@ class App extends Component {
     form.submit();
   }
 
+  setAllCardStatus(newStatus) {
+    const oldCards = this.state.cards;
+    var newCards = [];
+    for (var i = 0; i < oldCards.length; i++) {
+      const oldCard = oldCards[i];
+      const newCard = update(oldCard, {
+        verificationStatus: {$set: newStatus}
+      });
+      newCards.push(newCard);
+    }
+    this.setState({cards: newCards});
+  }
+
   render() {
     const handleCardClicked = (idx) => () => {
       const oldCards = this.state.cards;
@@ -96,31 +117,29 @@ class App extends Component {
         return;
       }
       const oldCard = oldCards[idx];
-      const oldVerification = oldCard.verification;
+      const oldVerification = oldCard.verificationStatus;
       const transitionTable = {
-        'UNVERIFIED': 'WRONG',
-        'WRONG': 'UNSURE',
-        'UNSURE': 'UNVERIFIED',
-        'CORRECT': 'UNVERIFIED' // should not happen
+        'U': 'W',
+        'W': 'C',
+        'C': 'W'
       }
       var newVerification = transitionTable[oldVerification];
       const newCard = update(oldCard, {
-        verification: {$set: newVerification}
+        verificationStatus: {$set: newVerification}
       });
       const newCards = update(oldCards, {
         $splice: [[idx, 1, newCard]]
       });
-      this.setState({cards: newCards})
+      this.setState({cards: newCards});
     }
 
     const makeCardCol = (idx, card) => (
-      <Col xs={4} className='cardCol'>
+      <Col key={idx.toString()} xs={4} className='cardCol'>
         <Card onCardClicked={ handleCardClicked(idx) }
-              verification={ card.verification }
               canvasWidth={256}
               canvasHeight={256}
-              imageUrl={ card.imageUrl }
-              polygon={ card.polygon } />
+              instanceId={ card.instanceId }
+              verificationStatus={ card.verificationStatus } />
       </Col>
     )
 
@@ -133,22 +152,29 @@ class App extends Component {
       <Grid>
         <h1>Review these annotations</h1>
 
+        { this.state.previewMode === true &&
+          <Alert bsStyle='danger'>You are in the preview mode. Your edits will not be stored until you accept this HIT.</Alert>
+        }
+
         <ListGroup>
           <ListGroupItem>
-            <Toolbar instructionClicked={ () => {
+            <Toolbar setAllCorrectClicked={ () => this.setAllCardStatus('C') }
+                     setAllWrongClicked={ () => this.setAllCardStatus('W') }
+                     instructionClicked={ () => {
                        this.setState({ showInstructionModal: !this.state.showInstructionModal })
                      } }
                      submitClicked={ () => {
+                       if (this.state.previewMode) { return; }
                        this.setState({ showSubmitModal: !this.state.showSubmitModal })
-                     } } />
+                     } }
+                     submitEnabled={ !this.state.previewMode }
+            />
           </ListGroupItem>
 
           <ListGroupItem>
-            <Grid>
-              <Row>
-                { cardCols }
-              </Row>
-            </Grid>
+            <Row>
+              { cardCols }
+            </Row>
           </ListGroupItem>
         </ListGroup>
 

@@ -39,10 +39,37 @@ ButtonWithTooltip.defaultProps = {
 
 
 export class Toolbar extends Component {
+  componentDidMount() {
+    document.addEventListener("keypress", (e) => {
+      switch(e.key) {
+        case 'c':
+          this.props.setAllCorrectClicked();
+          break;
+        case 'w':
+          this.props.setAllWrongClicked();
+          break;
+        case 's':
+          this.props.submitClicked();
+          break;
+        default:
+          break;
+      }
+    })
+  }
+
   render() {
     return (
       <div>
         <ButtonToolbar>
+          <ButtonGroup>
+            <ButtonWithTooltip onClick={ this.props.setAllCorrectClicked }
+                               tooltipText='Set All to Correct (c)'
+                               text='All Correct' />
+            <ButtonWithTooltip onClick={ this.props.setAllWrongClicked }
+                               tooltipText='Set All to Wrong (w)'
+                               text='All Wrong' />
+          </ButtonGroup>
+
           <ButtonGroup>
             <ButtonWithTooltip onClick={ this.props.instructionClicked }
                                tooltipText='Instructions'
@@ -51,9 +78,10 @@ export class Toolbar extends Component {
 
           <ButtonGroup>
             <ButtonWithTooltip onClick={ this.props.submitClicked }
+                               disabled={ !this.props.submitEnabled }
                                buttonStyle='primary'
-                               tooltipText='Finish and Submit'
-                               text='Submit' />
+                               tooltipText='Finish and Submit (s)'
+                               text={ this.props.submitEnabled ? 'Submit' : 'Accept HIT First'} />
           </ButtonGroup>
         </ButtonToolbar>
       </div>
@@ -62,6 +90,9 @@ export class Toolbar extends Component {
 }
 
 Toolbar.propTypes = {
+  setAllCorrectClicked: PropTypes.func.isRequired,
+  setAllWrongClicked: PropTypes.func.isRequired,
   instructionClicked: PropTypes.func.isRequired,
-  submitClicked: PropTypes.func.isRequired
+  submitClicked: PropTypes.func.isRequired,
+  submitEnabled: PropTypes.bool.isRequired
 }

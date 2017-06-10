@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
-from .models import MturkHit, PolygonAnnotationTask
+from .models import MturkHit
+# PolygonAnnotationTask
 
 COCO_IMAGE_URL_TEMPLATE = 'https://s3.amazonaws.com/cocotext-images/train2014/COCO_train2014_%012d.jpg'
 

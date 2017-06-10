@@ -26,7 +26,8 @@ SECRET_KEY = '=1k1i!1z9z9dih@e!+fhc(yez4!vxwun6r&q7a^5$ek%j+oyxs'
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'amt-api.bgshi.me'
+    # 'amt-api.bgshi.me'
+    '*' # TODO: change in production
 ]
 
 
@@ -126,3 +127,10 @@ USE_TZ = True
 
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 STATIC_URL = '/static/'
+
+
+# Custom settings
+MTURK_SANDBOX = True
+MTURK_ENDPOINT_URL = \
+    'https://mturk-requester-sandbox.us-east-1.amazonaws.com' if MTURK_SANDBOX else \
+    'https://mturk-requester.us-east-1.amazonaws.com'
