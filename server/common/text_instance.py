@@ -5,9 +5,9 @@ from PIL import Image
 
 from django.http import HttpResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 
-from api import settings
-from api.models import CocoTextInstance
+from common.models import CocoTextInstance
 
 
 def _polygon_bbox(polygon):

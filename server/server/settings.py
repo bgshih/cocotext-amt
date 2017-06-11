@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'api.apps.ApiConfig',
+    'common.apps.CommonConfig',
+    'polyverif.apps.PolyverifConfig'
 ]
 
 MIDDLEWARE = [
@@ -134,3 +135,9 @@ MTURK_SANDBOX = True
 MTURK_ENDPOINT_URL = \
     'https://mturk-requester-sandbox.us-east-1.amazonaws.com' if MTURK_SANDBOX else \
     'https://mturk-requester.us-east-1.amazonaws.com'
+
+# ratio of crop margin to the squared root of bounding box area
+TEXT_INSTANCE_CROP_MARGIN_RATIO = 1
+
+# Directory of the MSCOCO images
+LOCAL_COCO_IMAGE_DIR = '/home/ubuntu/data/coco-images/train2014'

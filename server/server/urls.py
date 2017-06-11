@@ -16,7 +16,13 @@ Including another URLconf
 from django.conf.urls import include, url
 from django.contrib import admin
 
+from common import text_instance
+from polyverif import polygon_verification
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^', include('api.urls')),
+    # url(r'^polyannot/(.+)/$', polygon_annotation.get_task_data),
+    url(r'^polyverif/(.+)/$', polygon_verification.get_task_data),
+    url(r'^textins/(.+)/crop/$', text_instance.get_text_instance_crop),
+    url(r'^textins/(.+)/crop/polygon/$', text_instance.get_text_instance_polygon_in_crop)
 ]

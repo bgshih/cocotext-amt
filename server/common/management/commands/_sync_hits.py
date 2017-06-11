@@ -4,8 +4,8 @@ from tqdm import tqdm
 
 from django.core.management.base import BaseCommand, CommandError
 
-from api.utils import get_mturk_client
-from api.models import MturkHit
+from common.utils import get_mturk_client
+from common.models import MturkHit
 
 
 class Command(BaseCommand):

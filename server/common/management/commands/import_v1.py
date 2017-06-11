@@ -3,7 +3,7 @@ from tqdm import tqdm
 
 from django.core.management.base import BaseCommand, CommandError
 
-from api.models import CocoTextImage, CocoTextInstance
+from common.models import CocoTextImage, CocoTextInstance
 
 
 class Command(BaseCommand):
