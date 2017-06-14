@@ -82,7 +82,7 @@ class CocoTextInstance(ModelBase):
 # MTurk Objects
 ################################################################################
 
-class Experiment(ModelBase):
+class HitSettings(ModelBase):
     name = models.CharField(max_length=64)
     version = models.CharField(max_length=16, default='0.0.1')
 
@@ -100,7 +100,7 @@ class Experiment(ModelBase):
     def new_hit(self, save=True):
         """ Create a new HIT with the HIT settings """
         hit = MturkHit()
-        hit.experiment = self
+        hit.hit_settings = self
         if save:
             hit.save()
         return hit
@@ -134,7 +134,7 @@ class MturkHit(ModelBase):
     creation_time = models.DateTimeField()
     expiration    = models.DateTimeField()
 
-    experiment = models.ForeignKey(Experiment, related_name='hits')
+    hit_settings = models.ForeignKey(HitSettings, related_name='hits')
 
     HIT_STATUS_CHOICES = (
         ('A', 'Assignable'),
@@ -161,21 +161,44 @@ class MturkHit(ModelBase):
     num_assignments_available = models.PositiveSmallIntegerField()
     num_assignments_completed = models.PositiveSmallIntegerField()
 
+    def sync(self, client=None, sync_assignments=True):
+        """ Sync status with AMT, also sync its assignments """
+        client = client or get_mturk_client()
+        response = client.get_hit(HITId=self.id)['HIT']
+
+        self.hit_status                = self.str_to_hit_status[response['HITStatus']]
+        self.review_status             = self.str_to_review_status[response['HITReviewStatus']]
+        self.num_assignments_pending   = response['NumberOfAssignmentsPending']
+        self.num_assignments_available = response['NumberOfAssignmentsAvailable']
+        self.num_assignments_completed = response['NumberOfAssignmentsCompleted']
+
+        self.save()
+
+        # update all assignments
+        if sync_assignments:
+            response = client.list_assignments_for_hit(
+                HITId=self.id,
+                MaxResults=100, # assignments should never exceed 100
+                AssignmentStatuses=['Submitted', 'Approved', 'Rejected']
+            )['Assignments']
+            for assignment_response in response:
+                MturkAssignment.create_or_update_from_response(assignment_response, save=True)
+
     def save(self, client=None, *args, **kwargs):
         if not self.id:
             client = client or get_mturk_client()
 
             # Create a new HIT on MTurk
             response = client.create_hit(
-                MaxAssignments              = self.experiment.max_assignments,
-                AutoApprovalDelayInSeconds  = int(self.experiment.auto_approval_delay.total_seconds()),
-                LifetimeInSeconds           = int(self.experiment.lifetime.total_seconds()),
-                AssignmentDurationInSeconds = int(self.experiment.assignment_duration.total_seconds()),
-                Reward                      = str(self.experiment.reward),
-                Title                       = self.experiment.title,
-                Keywords                    = self.experiment.keywords,
-                Description                 = self.experiment.description,
-                Question                    = self.experiment.question
+                MaxAssignments              = self.hit_settings.max_assignments,
+                AutoApprovalDelayInSeconds  = int(self.hit_settings.auto_approval_delay.total_seconds()),
+                LifetimeInSeconds           = int(self.hit_settings.lifetime.total_seconds()),
+                AssignmentDurationInSeconds = int(self.hit_settings.assignment_duration.total_seconds()),
+                Reward                      = str(self.hit_settings.reward),
+                Title                       = self.hit_settings.title,
+                Keywords                    = self.hit_settings.keywords,
+                Description                 = self.hit_settings.description,
+                Question                    = self.hit_settings.question
                 # RequesterAnnotation is not used
                 # QualificationRequirements TODO
                 # UniqueRequestToken is not used
@@ -199,29 +222,6 @@ class MturkHit(ModelBase):
             print('HIT {} created on AMT'.format(response['HITId']))
 
         super(MturkHit, self).save(*args, **kwargs)
-
-    def sync(self, client=None, sync_assignments=True):
-        """ Sync status with AMT, also sync its assignments """
-        client = client or get_mturk_client()
-        response = client.get_hit(HITId=self.id)['HIT']
-
-        self.hit_status                = self.str_to_hit_status[response['HITStatus']]
-        self.review_status             = self.str_to_review_status[response['HITReviewStatus']]
-        self.num_assignments_pending   = response['NumberOfAssignmentsPending']
-        self.num_assignments_available = response['NumberOfAssignmentsAvailable']
-        self.num_assignments_completed = response['NumberOfAssignmentsCompleted']
-
-        self.save()
-
-        # update all assignments
-        if sync_assignments:
-            response = client.list_assignments_for_hit(
-                HITId=self.hit_id,
-                MaxResults=100, # assignments should never exceed 100
-                AssignmentStatuses=['Submitted', 'Approved', 'Rejected']
-            )['Assignments']
-            for assignment_response in response:
-                MturkAssigment.create_or_update_from_response(assignment_response, save=True)
 
     def __str__(self):
         return self.id

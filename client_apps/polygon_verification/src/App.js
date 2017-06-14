@@ -61,13 +61,14 @@ class App extends Component {
     const fetchUrl = constants.API_SERVER_URL + '/polyverif/' + urlParams['hitId'];
     fetch(fetchUrl)
       .then((response) => response.json())
-      .then((tasksData) => {
-        const textInstancesData = tasksData.instances;
+      .then((taskData) => {
+        console.log(taskData);
+        const contents = taskData['contents'];
         var cards = [];
-        for (var textInstance of textInstancesData) {
+        for (var content of contents) {
           const card = {
-            instanceId: textInstance.id,
-            verificationStatus: textInstance.status
+            instanceId: content.id,
+            verificationStatus: content.verification
           }
           cards.push(card);
         }

@@ -2,21 +2,23 @@ from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 
 from common.models import MturkHit
-from polyverif.models import PolygonVerificationTask
 
 
 def get_task_data(request, hit_id):
-    task = MturkHit.objects.get(id=hit_id).polyverif_task
-    verif_instances = task.verification_instances.all()
+    task = MturkHit.objects.get(id=hit_id).task
 
     task_data = {
         'type': 'PolygonVerification',
-        'instances': []
+        'contents': []
     }
-    for verif_instance in verif_instances:
-        text_instance = verif_instance.text_instance
-        task_data['instances'].append({
+
+    print(task.contents.all())
+
+    for content in task.contents.all():
+        text_instance = content.text_instance
+        task_data['contents'].append({
             'id': text_instance.id,
-            'status': verif_instance.verification_status()
+            'verification': content.text_instance.polygon_verification
         })
+    
     return JsonResponse(task_data)

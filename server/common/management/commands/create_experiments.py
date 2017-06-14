@@ -28,7 +28,7 @@ class Command(BaseCommand):
         experiment.title = 'Verify these text annotations'
         experiment.keywords = 'image,text,verification'
         experiment.description = 'Check these annotations carefully and mark the images that are not properly annotated.'
-        experiment.question = """<ExternalQuestion xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2006-07-14/ExternalQuestion.xsd"> <ExternalURL>https://ec2-34-224-38-254.compute-1.amazonaws.com:3000</ExternalURL> <FrameHeight>800</FrameHeight> </ExternalQuestion>"""
+        experiment.question = """<ExternalQuestion xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2006-07-14/ExternalQuestion.xsd"> <ExternalURL>https://polyverif.bgshi.me</ExternalURL> <FrameHeight>800</FrameHeight> </ExternalQuestion>"""
 
         experiment.save()
 

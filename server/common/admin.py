@@ -3,7 +3,7 @@ from django.contrib import admin
 from common.models import *
 
 
-admin.site.register(Experiment)
+admin.site.register(HitSettings)
 
 
 class CocoTextImageAdmin(admin.ModelAdmin):
@@ -22,27 +22,27 @@ class CocoTextInstanceAdmin(admin.ModelAdmin):
 admin.site.register(CocoTextInstance, CocoTextInstanceAdmin)
 
 
-# class MturkHitAdmin(admin.ModelAdmin):
-#     readonly_fields = [f.name for f in MturkHit._meta.fields]
-#     list_display = [
-#         f.name for f in MturkHit._meta.fields if not \
-#             f.name in ('hit_type_id', 'hit_group_id')
-#     ]
-# admin.site.register(MturkHit, MturkHitAdmin)
+class MturkHitAdmin(admin.ModelAdmin):
+    readonly_fields = [f.name for f in MturkHit._meta.fields]
+    list_display = [
+        f.name for f in MturkHit._meta.fields if not \
+            f.name in ('added', 'updated', 'hit_type_id', 'hit_group_id')
+    ]
+admin.site.register(MturkHit, MturkHitAdmin)
 
 
-# class MturkAssignmentAdmin(admin.ModelAdmin):
-#     readonly_fields = [f.name for f in MturkAssignment._meta.fields]
-#     list_display = [ f.name for f in MturkAssignment._meta.fields if not \
-#         f.name in ('added', 'updated', 'answer')
-#     ]
-#     list_display.append('duration')
-# admin.site.register(MturkAssignment, MturkAssignmentAdmin)
+class MturkAssignmentAdmin(admin.ModelAdmin):
+    readonly_fields = [f.name for f in MturkAssignment._meta.fields]
+    list_display = [ f.name for f in MturkAssignment._meta.fields if not \
+        f.name in ('added', 'updated', 'answer_xml')
+    ]
+    list_display.append('duration')
+admin.site.register(MturkAssignment, MturkAssignmentAdmin)
 
 
-# class MturkWorkerAdmin(admin.ModelAdmin):
-#     readonly_fields = [f.name for f in MturkWorker._meta.fields]
-#     list_display = [ f.name for f in MturkWorker._meta.fields if not \
-#         f.name in ('added', 'updated')
-#     ]
-# admin.site.register(MturkWorker, MturkWorkerAdmin)
+class MturkWorkerAdmin(admin.ModelAdmin):
+    readonly_fields = [f.name for f in MturkWorker._meta.fields]
+    list_display = [ f.name for f in MturkWorker._meta.fields if not \
+        f.name in ('added', 'updated')
+    ]
+admin.site.register(MturkWorker, MturkWorkerAdmin)
