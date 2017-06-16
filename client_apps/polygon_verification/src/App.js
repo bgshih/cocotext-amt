@@ -53,10 +53,15 @@ class App extends Component {
       return;
     }
 
-    this.setState({
-      urlParams: urlParams,
-      previewMode: (urlParams['assignmentId'] === 'ASSIGNMENT_ID_NOT_AVAILABLE')
-    })
+    this.setState({ urlParams: urlParams })
+
+    // preview mode
+    if (urlParams['assignmentId'] === 'ASSIGNMENT_ID_NOT_AVAILABLE') {
+      this.setState({
+        previewMode: true,
+        showInstructionModal: true,
+      })
+    }
 
     const fetchUrl = constants.API_SERVER_URL + '/polyverif/' + urlParams['hitId'];
     fetch(fetchUrl)

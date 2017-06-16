@@ -4,7 +4,7 @@ from polyverif.models import *
 
 
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('name', 'hit_settings', 'num_contents', 'num_sentinel_contents', 'num_unassigned_contents', 'num_tasks', 'num_completed_tasks')
+    list_display = ('name', 'hit_settings', 'num_contents', 'content_progress', 'num_sentinel_contents', 'num_unassigned_contents', 'num_tasks', 'num_completed_tasks')
 admin.site.register(Project, ProjectAdmin)
 
 
@@ -36,4 +36,5 @@ admin.site.register(Content, ContentAdmin)
 class ResponseAdmin(admin.ModelAdmin):
     list_display = ('id', 'submission', 'content', 'worker', 'verification', 'sentinel_correct')
     readonly_fields = list_display
+    list_filter = ('worker',)
 admin.site.register(Response, ResponseAdmin)

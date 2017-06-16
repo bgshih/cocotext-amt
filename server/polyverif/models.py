@@ -19,7 +19,6 @@ VERIFICATION_CHOICES = (
     ('W', 'Wrong')
 )
 
-
 class Project(ModelBase):
     """ An object that keeps track of the tasks and contents """
     
@@ -56,12 +55,15 @@ class Project(ModelBase):
         else:
             num_tasks = min(max_num_tasks_possible, max_num_tasks)
             num_to_assign = int(num_tasks * num_content_per_task * (1 - sentinel_portion))
-            
+
         num_total_contents = num_tasks * num_content_per_task
         num_sentinel_to_assign = num_total_contents - num_to_assign
 
         print('Going to create %d tasks for %d unassigned contents and %d sentinel contents' % \
               (num_tasks, num_to_assign, num_sentinel_to_assign))
+        if input('Continue? [y/n] ') != 'y':
+            print('Aborted.')
+            return
 
         # positive number means the index of content to assign
         # negative number means the (-index-1) of sentinel
@@ -84,6 +86,12 @@ class Project(ModelBase):
     # total number of contents in this project
     def num_contents(self):
         return self.contents.count()
+
+    # portion of completed contents
+    def content_progress(self):
+        portion = self.contents.filter(status='C').count() / self.contents.count()
+        portion_str = '%.2f%%' % (portion * 100)
+        return portion_str
     
     # number of sentinel contents
     def num_sentinel_contents(self):
@@ -137,35 +145,33 @@ class Worker(ModelBase):
 
     # ratio of consensus among the completed contents responded by this worker
     def consensus_ratio(self):
-        responded_contents = [res.content for res in self.responses]
+        responded_contents = [res.content for res in self.responses.all()]
         completed_contents = [c for c in responded_contents if c.status == 'C']
         consensus_contents = [c for c in completed_contents if c.consensus() is not None]
         num_completed = len(completed_contents)
         num_reach_consensus = len(consensus_contents)
-        consensus_ratio = num_reach_consensus / num_completed
+        consensus_ratio = None if num_completed == 0 else num_reach_consensus / num_completed
         return consensus_ratio
 
     def num_sentinel_responded(self):
         count = 0
         for response in self.responses.all():
-            if response.content.sentinel:
+            if response.content.sentinel == True:
                 count += 1
         return count
 
     def num_sentinel_correct(self):
         count = 0
         for response in self.responses.all():
-            if response.content.sentinel and response.sentinel_correct():
+            if response.content.sentinel == True and response.sentinel_correct():
                 count += 1
         return count
 
     def sentinel_accuracy(self):
         num_responded = self.num_sentinel_responded()
         num_correct = self.num_sentinel_correct()
-        if num_responded == 0:
-            return 1.0
-        else:
-            return num_correct / (num_correct + num_responded)
+        accuracy = None if num_responded == 0 else num_correct / num_responded
+        return accuracy
 
     def block(self, block_reason):
         # TODO
@@ -201,14 +207,14 @@ class Task(ModelBase):
     # sync with MTurk to update HITs, assignments, submissions, and responses
     def sync(self, client=None):
         self.hit.sync(client=client, sync_assignments=True)
-        for a in self.hit.assignments:
+        for a in self.hit.assignments.all():
             if hasattr(a, 'submission') and a.submission is not None:
                 # update submission
                 a.submission.save()
             else:
                 # create a new submission object
                 worker, _ = Worker.objects.get_or_create(project=self.project, mturk_worker=a.worker)
-                s = Submission.create(assignment=a, task=self, worker=worker)
+                s = Submission.objects.create(assignment=a, task=self, worker=worker)
 
     def save(self, create_hit=True, *args, **kwargs):
         # set self.hit
@@ -264,22 +270,23 @@ class Submission(ModelBase):
 
         if self.data is None:
             self.data = parse_answer_xml(self.assignment.answer_xml)
-
-            # update responses from data
-            assert(self.data['type'] == 'PolygonVerification')
-            for content_id, verification in self.data['contents'].items():
-                # content must exsit
-                content = Content.objects.get(id=content_id)
-                
-                # response is only created once
-                response = Response.objects.create(
-                    submission=self,
-                    content=content,
-                    worker=self.worker,
-                    verification=verification
-                )
-
         super(Submission, self).save(*args, **kwargs)
+
+        # update responses from data
+        for response in self.data:
+            instance_id = response['instanceId']
+            verification = response['verificationStatus']
+
+            text_instance = CocoTextInstance.objects.get(id=instance_id)
+            content = Content.objects.get(text_instance=text_instance)
+
+            # response is only created once
+            response = Response.objects.create(
+                submission=self,
+                content=content,
+                worker=self.worker,
+                verification=verification
+            )
 
     def __str__(self):
         return str(self.id)
@@ -399,7 +406,7 @@ class Response(ModelBase):
         Worker,
         on_delete=models.CASCADE,
         related_name='responses'
-    ) 
+    )
     
     # response data: the verification
     verification = models.CharField(max_length=1, choices=VERIFICATION_CHOICES)
@@ -412,6 +419,3 @@ class Response(ModelBase):
 
     def __str__(self):
         return str(self.id)
-
-    class Meta:
-        unique_together = ('submission', 'content', 'worker')
