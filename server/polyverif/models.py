@@ -113,10 +113,16 @@ class Project(ModelBase):
     def sync(self, client=None, skip_completed_tasks=True):
         tasks = self.tasks.filter(completed=False) if skip_completed_tasks == True else \
                 self.tasks.all()
-        print('Going to sync {} tasks'.format(tasks.count()))
+        print('[1/2] Synching tasks, submissions, responses, and workers')
+        print('Synching {} tasks'.format(tasks.count()))
         for task in tqdm(tasks):
             task.sync(client=client)
-            task.save()
+
+        print('[2/2] Synching contents')
+        pending_contents = self.contents.filter(status='P')
+        print('Syching {} contents'.format(pending_contents.count()))
+        for content in tqdm(pending_contents):
+            content.save()
 
     def __str__(self):
         return self.name
@@ -147,7 +153,7 @@ class Worker(ModelBase):
     def consensus_ratio(self):
         responded_contents = [res.content for res in self.responses.all()]
         completed_contents = [c for c in responded_contents if c.status == 'C']
-        consensus_contents = [c for c in completed_contents if c.consensus() is not None]
+        consensus_contents = [c for c in completed_contents if c.consensus is not None]
         num_completed = len(completed_contents)
         num_reach_consensus = len(consensus_contents)
         consensus_ratio = None if num_completed == 0 else num_reach_consensus / num_completed
@@ -208,13 +214,12 @@ class Task(ModelBase):
     def sync(self, client=None):
         self.hit.sync(client=client, sync_assignments=True)
         for a in self.hit.assignments.all():
-            if hasattr(a, 'submission') and a.submission is not None:
-                # update submission
-                a.submission.save()
-            else:
+            if not hasattr(a, 'submission') or a.submission is None:
                 # create a new submission object
                 worker, _ = Worker.objects.get_or_create(project=self.project, mturk_worker=a.worker)
-                s = Submission.objects.create(assignment=a, task=self, worker=worker)
+                # submission should be created and saved only once
+                s, created = Submission.objects.get_or_create(assignment=a, task=self, worker=worker)
+        self.save()
 
     def save(self, create_hit=True, *args, **kwargs):
         # set self.hit
@@ -258,9 +263,11 @@ class Submission(ModelBase):
     data = JSONField()
 
     def save(self, *args, **kwargs):
+        # set task from HIT
         if self.task is None:
             self.task = self.assignment.hit.task
 
+        # set worker from assignment
         if self.worker is None:
             self.worker, _ = Worker.objects.get_or_create(
                 project=self.task.project,
@@ -268,11 +275,12 @@ class Submission(ModelBase):
             )
         assert(self.worker.mturk_worker.id == self.assignment.worker.id)
 
+        # set data by parsing assignment's answer_xml
         if self.data is None:
             self.data = parse_answer_xml(self.assignment.answer_xml)
         super(Submission, self).save(*args, **kwargs)
 
-        # update responses from data
+        # update responses from the parsed data
         for response in self.data:
             instance_id = response['instanceId']
             verification = response['verificationStatus']
@@ -290,6 +298,10 @@ class Submission(ModelBase):
 
     def __str__(self):
         return str(self.id)
+
+    class Meta:
+        # a worker should not produce more than one submissions per task
+        unique_together = ('task', 'worker') 
 
 
 class Content(ModelBase):
@@ -339,7 +351,7 @@ class Content(ModelBase):
         return self.responses.count()
 
     # the consensus verification, None if no consensus is reached
-    def consensus(self):
+    def get_consensus(self):
         # if sentinel, use groundtruth
         if self.sentinel:
             return self.gt_verification
@@ -364,6 +376,12 @@ class Content(ModelBase):
             result = None
         return result
 
+    consensus = models.CharField(
+        max_length=1,
+        null=True,
+        choices=VERIFICATION_CHOICES
+    )
+
     def save(self, *args, **kwargs):
         if self.num_responses_required is None:
             self.num_responses_required = settings.POLYVERIF_MIN_CONSENSUS_COUNT
@@ -377,6 +395,9 @@ class Content(ModelBase):
             self.status = 'P'
         else:
             self.status = 'U'
+
+        # update consensus status
+        self.consensus = self.get_consensus()
 
         super(Content, self).save(*args, **kwargs)
 
@@ -419,3 +440,6 @@ class Response(ModelBase):
 
     def __str__(self):
         return str(self.id)
+
+    class Meta:
+        unique_together = ('submission', 'content', 'worker')

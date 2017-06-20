@@ -9,16 +9,21 @@ def get_task_data(request, hit_id):
 
     task_data = {
         'type': 'PolygonVerification',
-        'contents': []
+        'contents': [],
+        'gtAnswers': {},
     }
-
-    print(task.contents.all())
 
     for content in task.contents.all():
         text_instance = content.text_instance
+        instance_id = text_instance.id
+
         task_data['contents'].append({
-            'id': text_instance.id,
-            'verification': content.text_instance.polygon_verification
+            'id': instance_id,
+            'verification': 'U'
         })
+
+        print(content.sentinel)
+        if content.sentinel == True:
+            task_data['gtAnswers'][instance_id] = content.gt_verification
     
     return JsonResponse(task_data)

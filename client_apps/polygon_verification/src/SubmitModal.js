@@ -27,7 +27,7 @@ const SubmitModal = ({ show, hideClicked, submitConfirmed }) => (
 SubmitModal.propTypes = {
   show: PropTypes.bool.isRequired,
   hideClicked: PropTypes.func.isRequired,
-  submitConfirmed: PropTypes.func.isRequired
+  submitConfirmed: PropTypes.func.isRequired,
 };
 
 export default SubmitModal

@@ -1,14 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Modal } from 'react-bootstrap';
+import { Button, Modal, Alert } from 'react-bootstrap';
 
-const InstructionModal = ({ show, hideClicked }) => (
+const InstructionModal = ({ show, hideClicked, pausePenalty, pausePenaltyCountdown }) => (
   <Modal show={ show } onHide={ hideClicked } bsSize='large'>
     <Modal.Header closeButton>
       <Modal.Title><h2>READ THE FOLLOWING INSTRUCTIONS CAREFULLY BEFORE STARTING TO WORK</h2></Modal.Title>
     </Modal.Header>
 
     <Modal.Body>
+
+      { pausePenalty &&
+        <Alert bsStyle='danger'><b>WARNING</b> We detect an error in your answers. Please spend some time to read the instructions, review your answers, and submit again. Submission to re-open in {pausePenaltyCountdown} seconds.</Alert>
+      }
 
       <h3>Job Description</h3>
 
@@ -39,6 +43,8 @@ const InstructionModal = ({ show, hideClicked }) => (
 InstructionModal.propTypes = {
   show: PropTypes.bool.isRequired,
   hideClicked: PropTypes.func.isRequired,
+  pausePenalty: PropTypes.bool.isRequired,
+  pausePenaltyCountdown: PropTypes.number.isRequired,
 };
 
 export default InstructionModal

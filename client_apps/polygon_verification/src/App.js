@@ -20,6 +20,9 @@ class App extends Component {
       showSubmitModal: false,
       showInstructionModal: false,
       previewMode: false,
+      pausePenalty: false,
+      pausePenaltyCountdown: 0,
+      gtAnswers: {} 
     }
   }
 
@@ -67,7 +70,6 @@ class App extends Component {
     fetch(fetchUrl)
       .then((response) => response.json())
       .then((taskData) => {
-        console.log(taskData);
         const contents = taskData['contents'];
         var cards = [];
         for (var content of contents) {
@@ -80,15 +82,75 @@ class App extends Component {
         this.setState({
           cards: cards
         });
+
+        // fetch groundtruth sentinel contents
+        this.setState({
+          gtAnswers: taskData['gtAnswers']
+        });
       });
   }
 
+  checkSentinelCorrect() {
+    // check gtAnswers
+    const gtAnswers = this.state.gtAnswers;
+    var correct = true;
+    for (var card of this.state.cards) {
+      if (gtAnswers[card.instanceId] !== undefined &&
+          gtAnswers[card.instanceId] !== card.verificationStatus) {
+        correct = false;
+      }
+    }
+
+    this.setState({
+      hasCheckedSentinel: true
+    });
+
+    return correct;
+  }
+  
+  startPenaltyPause(pauseSeconds=15) {
+    // close submit modal, show instruction modal, and start a penalty pause countdown
+    this.setState({
+      showSubmitModal: false,
+      showInstructionModal: true,
+      pausePenalty: true,
+      pausePenaltyCountdown: pauseSeconds
+    });
+
+    var timerId;
+    timerId = setInterval(
+      () => {
+        if (this.state.pausePenaltyCountdown > 0) {
+          this.setState({
+            pausePenaltyCountdown: this.state.pausePenaltyCountdown - 1
+          });
+        } else {
+          // penalty time up
+          this.setState({
+            pausePenalty: false
+          });
+          // clear timer
+          clearInterval(timerId);
+        }
+      },
+      1000
+    );
+  }
+
   submit() {
+    // check sentinel correctness before submit to MTurk
+    // TODO
+    if (!this.state.hasCheckedSentinel && this.checkSentinelCorrect() === false) {
+      this.startPenaltyPause(15);
+      return;
+    }
+    
     const urlParams = this.state.urlParams;
 
+    // submit answer to MTurk
     var form = document.createElement("form");
-    form.method = 'POST';
     form.action = urlParams.turkSubmitTo + '/mturk/externalSubmit';
+    form.method = 'POST';
     const appendField = (key, value) => {
       var field = document.createElement("input");
       field.name = key;
@@ -97,8 +159,8 @@ class App extends Component {
     }
     appendField('assignmentId', urlParams.assignmentId);
     appendField('answerData', JSON.stringify(this.state.cards));
-
     document.body.appendChild(form);
+
     form.submit();
   }
 
@@ -170,8 +232,13 @@ class App extends Component {
                        this.setState({ showInstructionModal: !this.state.showInstructionModal })
                      } }
                      submitClicked={ () => {
-                       if (this.state.previewMode) { return; }
-                       this.setState({ showSubmitModal: !this.state.showSubmitModal })
+                       if (this.state.previewMode) {
+                         return;
+                       } else if (this.state.pausePenalty === true) {
+                         this.setState({ showInstructionModal: true })
+                       } else {
+                        this.setState({ showSubmitModal: !this.state.showSubmitModal })
+                       }
                      } }
                      submitEnabled={ !this.state.previewMode }
             />
@@ -188,7 +255,10 @@ class App extends Component {
                      hideClicked={ () => { this.setState({ showSubmitModal: false }) } }
                      submitConfirmed={ this.submit.bind(this) } />
         <InstructionModal show={ this.state.showInstructionModal }
-                          hideClicked={ () => { this.setState({ showInstructionModal: false }) } } />
+                          hideClicked={ () => { this.setState({ showInstructionModal: false }) } }
+                          pausePenalty={ this.state.pausePenalty }
+                          pausePenaltyCountdown={ this.state.pausePenaltyCountdown }
+                          />
       </Grid>
     );
   }
