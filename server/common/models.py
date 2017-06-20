@@ -113,6 +113,8 @@ class MturkWorker(ModelBase):
     # obtained from AMT
     id = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
 
+    blocked = models.BooleanField(default=False)
+
     @classmethod
     def get_or_create(cls, worker_id):
         try:
@@ -121,6 +123,30 @@ class MturkWorker(ModelBase):
             worker = cls(id=worker_id)
             worker.save()
         return worker
+
+    def block(self, client=None, reason=None):
+        client = client or get_mturk_client()
+        params = {
+            'WorkerId': self.id,
+        }
+        if reason is not None:
+            params['Reason'] = reason
+        client.create_worker_block(**params)
+        print('MTurk Worker {} has been blocked from all HITs'.format(self.id))
+        self.blocked = True
+        self.save()
+
+    def unblock(self, client=None, reason=None):
+        client = client or get_mturk_client()
+        params = {
+            'WorkerId': self.id,
+        }
+        if reason is not None:
+            params['Reason'] = reason
+        client.delete_worker_block(**params)
+        print('MTurk Worker {} has been unblocked from all HITs'.format(self.id))
+        self.blocked = False
+        self.save()
 
     def __str__(self):
         return self.id
@@ -160,6 +186,27 @@ class MturkHit(ModelBase):
     num_assignments_pending   = models.PositiveSmallIntegerField()
     num_assignments_available = models.PositiveSmallIntegerField()
     num_assignments_completed = models.PositiveSmallIntegerField()
+
+    def approve(self, client=None, feedback=None, override_rejection=False):
+        client = client or get_mturk_client()
+        params = {
+            'AssignmentId': self.id,
+            'OverrideRejection': override_rejection
+        }
+        if feedback is not None:
+            params['RequesterFeedback'] = feedback
+        client.approve_assignment(**params)
+        print('Assignment {} approved'.format(self.id))
+
+    def reject(self, client=None, feedback=None):
+        client = client or get_mturk_client()
+        params = {
+            'AssignmentId': self.id,
+        }
+        if feedback is not None:
+            params['RequesterFeedback'] = feedback
+        client.reject_assignment(**params)
+        print('Assignment {} rejected'.format(self.id))
 
     def sync(self, client=None, sync_assignments=True):
         """ Sync status with AMT, also sync its assignments """
@@ -297,3 +344,206 @@ class MturkAssignment(ModelBase):
 
     def __str__(self):
         return str(self.id)
+
+
+class QualificationType(ModelBase):
+    # qualification type id, obtained after creation
+    id = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
+
+    # obtained after creation
+    creation_time = models.DateTimeField()
+
+    name        = models.CharField(max_length=64)
+    keywords    = models.CharField(max_length=256)
+    description = models.TextField()
+
+    QUALIFICATION_TYPE_STATUS_CHOICES = (
+        ('A', 'Active'),
+        ('I', 'Inactive'),
+    )
+    qtype_status_key_to_str = {k:v for k, v in QUALIFICATION_TYPE_STATUS_CHOICES}
+    qtype_status_str_to_key = {v:k for k, v in QUALIFICATION_TYPE_STATUS_CHOICES}
+    qualification_type_status = models.CharField(max_length=1, choices=QUALIFICATION_TYPE_STATUS_CHOICES, default='A')
+
+    test          = models.TextField()
+    test_duration = models.DurationField()
+    answer_key    = models.TextField(null=True)
+    retry_delay   = models.DurationField()
+
+    # obtained after creation
+    is_requestable = models.BooleanField()
+
+    auto_granted = models.BooleanField()
+    auto_granted_value = models.IntegerField(null=True)
+
+    def create_qtype_on_mturk(self, client=None):
+        client = client or get_mturk_client()
+
+        params = {
+            'Name': self.name,
+            'Keywords': self.keywords,
+            'Description': self.description,
+            'QualificationTypeStatus': qtype_status_key_to_str[self.qualification_type_status],
+            'RetryDelayInSeconds': self.retry_delay.total_seconds(),
+            'Test': self.test,
+            'TestDurationInSeconds': self.test_duration.total_seconds(),
+            'AutoGranted': self.auto_granted,
+        }
+        if self.answer_key is not None:
+            params['AnswerKey'] = self.answer_key
+        if self.auto_granted == True:
+            params['AutoGrantedValue'] = self.auto_granted_value
+
+        response = client.create_qualification_type(**params)
+        print('QualificationType {} created on MTurk'.format(response['QualificationTypeId']))
+
+        self.id = response['QualificationTypeId']
+        self.creation_time = response['CreationTime']
+        self.is_requestable = response['IsRequestable']
+    
+    def update_qtype_on_mturk(self, client=None):
+        client = client or get_mturk_client()
+        params = {
+            'QualificationTypeId': self.id,
+            'Description': self.description,
+            'QualificationTypeStatus': qtype_status_key_to_str[self.qualification_type_status],
+            'Test': self.test,
+            'TestDurationInSeconds': self.test_duration.total_seconds(),
+            'RetryDelayInSeconds': self.retry_delay.total_seconds(),
+            'AutoGranted': self.auto_granted,
+            'AutoGrantedValue': 123
+        }
+        if self.answer_key is not None:
+            params['AnswerKey'] = self.answer_key
+        if self.auto_granted_value is not none:
+            params['AutoGrantedValue'] = self.auto_granted_value
+        client.update_qualification_type(**params)
+        print('QualificationType {} updated on MTurk'.format(self.id))
+
+    def associate_to_worker(self, worker_id, client=None, value=None, send_notification=False):
+        client = client or get_mturk_client()
+        params = {
+            'QualificationTypeId': self.id,
+            'WorkerId': worker_id,
+            'SendNotification': send_notification
+        }
+        if value is not None:
+            params['IntegerValue'] = value
+        client.associate_qualification_with_worker(**params)
+        worker, _ = MturkWorker.objects.get_or_create(id=worker_id)
+        print('QualificationType {} associated to worker {} with value {}. Notification{} sent'.format(
+            self.id, worker, value, "" if send_notification else " not"
+        ))
+    
+    def disassociate_from_worker(self, worker_id, client=None, reason=None):
+        client = client or get_mturk_client()
+        params = {
+            'QualificationTypeId': self.id,
+            'WorkerId': worker_id
+        }
+        if reason is not None:
+            params['Reason'] = reason
+        client.disassociate_qualification_from_worker(**params)
+        worker, _ = MturkWorker.objects.get_or_create(id=worker_id)
+        print('QualificationType {} disassociated from worker {}'.format(self.id, worker))
+
+    def save(self, client=None, *args, **kwargs):
+        if self.id is None:
+            client = client or get_mturk_client()
+            self.create_qtype_on_mturk(client)
+        else:
+            client = client or get_mturk_client()
+            self.update_qtype_on_mturk(client)
+        super(QualificationType, self).save(*args, **kwargs)
+
+    def delete(self, client=None, *args, **kwargs):
+        client = client or get_mturk_client()
+        client.delete_qualification_type(
+            QualificationTypeId=self.id
+        )
+        print('QualificationType {} deleted on MTurk'.format(self.id))
+        super(QualificationType, self).delete(*args, **kwargs)
+
+    def sync(self, client=None, sync_requests=True):
+        """ Sync status and its requests """
+        client = client or get_mturk_client()
+
+        # sync QualificationType statuses
+        response = client.get_qualification_type(
+            QualificationTypeId=self.id
+        )
+        self.qualification_type_status = qtype_status_str_to_key[response['QualificationTypeStatus']]
+        self.is_requestable = response['IsRequestable']
+        self.save()
+
+        if sync_requests == True:
+            max_results = 64
+            next_token = None
+            num_results = None
+            while num_results is None or num_results == max_results:
+                params = {
+                    'QualificationTypeId': self.id,
+                    'MaxResults': max_results
+                }
+                if next_token is not None:
+                    params['NextToken'] = next_token
+                response = client.list_qualification_requests(**params)                
+
+                num_results = response['NumResults']
+                next_token = response['NextToken']
+                
+                for request in response['QualificationRequests']:
+                    worker, _ = MturkWorker.get_or_create(id=request['WorkerId'])
+                    assert(self.id == request['QualificationTypeId'])
+                    QualificationRequest.get_or_create(
+                        id                 = request['QualificationRequestId'],
+                        qualification_type = self,
+                        worker             = worker,
+                        test               = request['Test'],
+                        answer             = request['Answer'],
+                        submit_time        = request['SubmitTime']
+                    )
+
+    def __str__(self):
+        return self.id
+
+class QualificationRequest(ModelBase):
+    """ QualificationRequest should be created by calling QualificationType.sync """
+
+    # obtained from MTurk after creation
+    id = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
+
+    qualification_type = models.ForeignKey(QualificationType, on_delete=models.CASCADE)
+
+    # obtained from mturk
+    worker      = models.ForeignKey(MturkWorker)
+    test        = models.TextField()
+    answer      = models.TextField()
+    submit_time = models.DateTimeField()
+
+    def accept(self, client=None, value=None):
+        """ Accept request with an optional integer value attached to it. """
+        params = {
+            'QualificationRequestId': self.id
+        }
+        if value is not None:
+            params['IntegerValue'] = value
+        client.accept_qualification_request(**params)
+        print('Qualification request {} by worker {} has been ACCEPTED on MTurk'.format(
+            self.id, self.worker
+        ))
+
+    def reject(self, client=None, reason=None):
+        """ Reject request. """
+        reason = reason or 'Sorry, we cannot accept your request at this moment.'
+        params = {
+            'QualificationRequestId': self.id,
+            'Reason': reason
+        }
+        client.reject_qualification_request(**params)
+        print('Qualification request {} by worker {} has been REJECTED on MTurk'.format(
+            self.id, self.worker
+        ))
+
+    def __str__(self):
+        return self.id
