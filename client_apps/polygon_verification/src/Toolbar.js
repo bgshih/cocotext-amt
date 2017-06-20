@@ -42,12 +42,6 @@ export class Toolbar extends Component {
   componentDidMount() {
     document.addEventListener("keypress", (e) => {
       switch(e.key) {
-        case 'c':
-          this.props.setAllCorrectClicked();
-          break;
-        case 'w':
-          this.props.setAllWrongClicked();
-          break;
         case 's':
           this.props.submitClicked();
           break;
@@ -61,15 +55,6 @@ export class Toolbar extends Component {
     return (
       <div>
         <ButtonToolbar>
-          <ButtonGroup>
-            <ButtonWithTooltip onClick={ this.props.setAllCorrectClicked }
-                               tooltipText='Set All to Correct (c)'
-                               text='All Correct' />
-            <ButtonWithTooltip onClick={ this.props.setAllWrongClicked }
-                               tooltipText='Set All to Wrong (w)'
-                               text='All Wrong' />
-          </ButtonGroup>
-
           <ButtonGroup>
             <ButtonWithTooltip onClick={ this.props.instructionClicked }
                                tooltipText='Instructions'

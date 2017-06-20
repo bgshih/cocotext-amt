@@ -186,6 +186,9 @@ class Worker(ModelBase):
     def __str__(self):
         return str(self.id)
 
+    class Meta:
+        unique_together = ('project', 'mturk_worker')
+
 
 class Task(ModelBase):
     """ Extends MturkHIT """
@@ -212,14 +215,28 @@ class Task(ModelBase):
     
     # sync with MTurk to update HITs, assignments, submissions, and responses
     def sync(self, client=None):
+        # sync HIT and its assignments
         self.hit.sync(client=client, sync_assignments=True)
+
+        # sync with HIT's assignments
         for a in self.hit.assignments.all():
             if not hasattr(a, 'submission') or a.submission is None:
-                # create a new submission object
+                # create worker
                 worker, _ = Worker.objects.get_or_create(project=self.project, mturk_worker=a.worker)
-                # submission should be created and saved only once
+
+                # create a submission from assignment
                 s, created = Submission.objects.get_or_create(assignment=a, task=self, worker=worker)
+
+                # create responses from submission data
+                if created:
+                    s.create_responses()
+
         self.save()
+
+        # update child contents
+        for c in self.contents.filter(status='P'):
+            c.save()
+
 
     def save(self, create_hit=True, *args, **kwargs):
         # set self.hit
@@ -230,18 +247,18 @@ class Task(ModelBase):
         if self.num_submissions_required is None:
             self.num_submissions_required = self.project.hit_settings.max_assignments
 
-        # set self.completed
-        if self.num_submissions() >= self.num_submissions_required:
-            self.completed = True
+        # set or update self.completed
+        self.completed = (self.num_submissions() >= self.num_submissions_required)
         
         super(Task, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         self.hit.delete()
+        # update the contents of this task after delete
         contents = self.contents.all()
         super(Task, self).delete(*args, **kwargs)
         for content in contents:
-            content.save() # update it
+            content.save()
 
     def __str__(self):
         return str(self.id)
@@ -276,20 +293,24 @@ class Submission(ModelBase):
         assert(self.worker.mturk_worker.id == self.assignment.worker.id)
 
         # set data by parsing assignment's answer_xml
+        # assignment.answer_xml won't change, so this only need to be called once
         if self.data is None:
             self.data = parse_answer_xml(self.assignment.answer_xml)
+
         super(Submission, self).save(*args, **kwargs)
+
+    def create_responses(self):
+        assert(self.data is not None and isinstance(self.data, list))
 
         # update responses from the parsed data
         for response in self.data:
             instance_id = response['instanceId']
             verification = response['verificationStatus']
 
-            text_instance = CocoTextInstance.objects.get(id=instance_id)
-            content = Content.objects.get(text_instance=text_instance)
+            content = Content.objects.get(text_instance=instance_id)
 
             # response is only created once
-            response = Response.objects.create(
+            response = Response.objects.get_or_create(
                 submission=self,
                 content=content,
                 worker=self.worker,
@@ -383,6 +404,7 @@ class Content(ModelBase):
     )
 
     def save(self, *args, **kwargs):
+        # set value for num_responses_required
         if self.num_responses_required is None:
             self.num_responses_required = settings.POLYVERIF_MIN_CONSENSUS_COUNT
 

@@ -13,7 +13,6 @@ class WorkerAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'project', 'mturk_worker', 'blocked', 'num_responses', 'consensus_ratio', 'num_sentinel_responded', 'num_sentinel_correct', 'sentinel_accuracy')
 admin.site.register(Worker, WorkerAdmin)
 
-
 class TaskAdmin(admin.ModelAdmin):
     list_display = ('id', 'project', 'hit', 'num_submissions_required', 'num_submissions', 'completed', 'num_contents')
     readonly_fields = ('id', 'project', 'hit', 'num_submissions', 'completed', 'num_contents')

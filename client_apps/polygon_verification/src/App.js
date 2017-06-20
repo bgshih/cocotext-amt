@@ -28,6 +28,8 @@ class App extends Component {
 
   componentDidMount() {
     this.fetchTaskData();
+
+    this.setAllCardStatus('W');
   }
 
   fetchTaskData() {
