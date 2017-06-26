@@ -28,8 +28,6 @@ class App extends Component {
 
   componentDidMount() {
     this.fetchTaskData();
-
-    this.setAllCardStatus('W');
   }
 
   fetchTaskData() {
@@ -77,7 +75,7 @@ class App extends Component {
         for (var content of contents) {
           const card = {
             instanceId: content.id,
-            verificationStatus: content.verification
+            verificationStatus: 'W'
           }
           cards.push(card);
         }

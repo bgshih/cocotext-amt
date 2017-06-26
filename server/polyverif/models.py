@@ -8,8 +8,7 @@ from django.contrib.postgres.fields import JSONField
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 
-from common.models import ModelBase, HitSettings, MturkHit,\
-    MturkAssignment, MturkWorker, CocoTextInstance
+from common.models import *
 from common.utils import get_mturk_client, parse_answer_xml
 
 
@@ -31,6 +30,10 @@ class Project(ModelBase):
         HitSettings,
         on_delete=models.PROTECT
     )
+
+    # # qualification test data
+    # qualification_test_contents = JSONField()
+    # qualification_type = models.ForeignKey(QualificationType)
     
     def create_tasks(self, max_num_tasks=None):
         """ Create new tasks from pending and sentinel contents """
@@ -143,8 +146,8 @@ class Worker(ModelBase):
         related_name='project_workers'
     )
 
-    # is the worker blocked
-    blocked = models.BooleanField(default=False)
+    def blocked(self):
+        return self.mturk_worker.blocked
 
     def num_responses(self):
         return self.responses.count()
@@ -178,10 +181,6 @@ class Worker(ModelBase):
         num_correct = self.num_sentinel_correct()
         accuracy = None if num_responded == 0 else num_correct / num_responded
         return accuracy
-
-    def block(self, block_reason):
-        # TODO
-        pass
 
     def __str__(self):
         return str(self.id)
@@ -322,7 +321,7 @@ class Submission(ModelBase):
 
     class Meta:
         # a worker should not produce more than one submissions per task
-        unique_together = ('task', 'worker') 
+        unique_together = ('task', 'worker')
 
 
 class Content(ModelBase):
@@ -374,7 +373,7 @@ class Content(ModelBase):
     # the consensus verification, None if no consensus is reached
     def get_consensus(self):
         # if sentinel, use groundtruth
-        if self.sentinel:
+        if self.sentinel == True:
             return self.gt_verification
 
         if self.status != 'C':

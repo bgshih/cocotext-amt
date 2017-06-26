@@ -113,6 +113,7 @@ class MturkWorker(ModelBase):
     # obtained from AMT
     id = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
 
+    # should be set by calling block() and unblock()
     blocked = models.BooleanField(default=False)
 
     @classmethod
@@ -415,7 +416,7 @@ class QualificationType(ModelBase):
         }
         if self.answer_key is not None:
             params['AnswerKey'] = self.answer_key
-        if self.auto_granted_value is not none:
+        if self.auto_granted_value is not None:
             params['AutoGrantedValue'] = self.auto_granted_value
         client.update_qualification_type(**params)
         print('QualificationType {} updated on MTurk'.format(self.id))

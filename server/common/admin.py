@@ -46,3 +46,9 @@ class MturkWorkerAdmin(admin.ModelAdmin):
         f.name in ('added', 'updated')
     ]
 admin.site.register(MturkWorker, MturkWorkerAdmin)
+
+
+class QualificationTypeAdmin(admin.ModelAdmin):
+    readonly_fields = ('added', 'updated', 'id', 'creation_time', 'is_requestable')
+    list_display = ('id', 'creation_time', 'name', 'is_requestable')
+admin.site.register(QualificationType, QualificationTypeAdmin)

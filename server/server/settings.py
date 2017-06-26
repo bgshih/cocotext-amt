@@ -23,7 +23,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '=1k1i!1z9z9dih@e!+fhc(yez4!vxwun6r&q7a^5$ek%j+oyxs'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
+
+# Use MTurk development sandbox
+MTURK_SANDBOX = DEBUG
+
+# Use a separate database in development
+DATABASE_NAME = 'cocotext_v2_sandbox' if MTURK_SANDBOX == True else \
+                'cocotext_v2_amt'
 
 ALLOWED_HOSTS = [
     # 'amt-api.bgshi.me'
@@ -81,7 +88,7 @@ WSGI_APPLICATION = 'server.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'cocotext_v2_amt',
+        'NAME': DATABASE_NAME,
         'USER': 'cocotext',
         'PASSWORD': 'w2PtkwRhThtyA',
         'HOST': 'localhost',
@@ -125,13 +132,11 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
-
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 STATIC_URL = '/static/'
 
 
-# Custom settings
-MTURK_SANDBOX = True
+# MTurk settings
 MTURK_ENDPOINT_URL = \
     'https://mturk-requester-sandbox.us-east-1.amazonaws.com' if MTURK_SANDBOX else \
     'https://mturk-requester.us-east-1.amazonaws.com'

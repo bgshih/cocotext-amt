@@ -23,6 +23,7 @@ const InstructionModal = ({ show, hideClicked, pausePenalty, pausePenaltyCountdo
 
       <h3>Examples (click to enlarge)</h3>
       <a target="_blank"
+         rel="noopener noreferrer"
          href="https://s3.amazonaws.com/cocotext-amt-resource/polygon-verification-examples.jpg">
         <img alt="Examples"
              src="https://s3.amazonaws.com/cocotext-amt-resource/polygon-verification-examples.jpg"
