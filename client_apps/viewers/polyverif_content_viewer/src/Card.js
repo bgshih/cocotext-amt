@@ -7,16 +7,27 @@ import * as constants from './constants.js';
 
 export class Card extends Component {
   componentDidMount() {
-    // load image and draw polygon in the canvas
-    const ctx = this.refs.c.getContext('2d');
+    this.redrawCanvas();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.props.instanceId === prevProps.instanceId) {
+      return;
+    }
+    this.redrawCanvas();
+  }
+
+  redrawCanvas() {
+    var ctx = this.refs.c.getContext('2d');
+    const canvasWidth = this.props.canvasWidth;
+    const canvasHeight = this.props.canvasHeight;
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     // load instance image and polygon
     var image = new Image();
     const imageUrl = constants.API_SERVER_URL + '/textins/' + this.props.instanceId + '/crop/';
     const polygonUrl = constants.API_SERVER_URL + '/textins/' + this.props.instanceId + '/crop/polygon/';
     image.onload = () => {
-      const canvasWidth = this.props.canvasWidth;
-      const canvasHeight = this.props.canvasHeight;
       const scale = Math.min(canvasWidth / image.width,
                              canvasHeight / image.height);
       const dstWidth = scale * image.width;

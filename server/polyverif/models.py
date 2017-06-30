@@ -25,66 +25,11 @@ class Project(ModelBase):
     # name of the project
     name = models.CharField(max_length=128)
 
-    # hit settings
-    hit_settings = models.ForeignKey(
-        HitSettings,
+    # HIT type
+    hit_type = models.ForeignKey(
+        MturkHitType,
         on_delete=models.PROTECT
     )
-
-    # # qualification test data
-    # qualification_test_contents = JSONField()
-    # qualification_type = models.ForeignKey(QualificationType)
-    
-    def create_tasks(self, max_num_tasks=None):
-        """ Create new tasks from pending and sentinel contents """
-
-        # constants
-        num_content_per_task = settings.POLYVERIF_NUM_CONTENT_PER_TASK
-        sentinel_portion = settings.POLYVERIF_SENTINEL_PORTION
-
-        unassigned_contents = self.contents.filter(status='U')
-        sentinel_contents = self.contents.filter(sentinel=True)
-        num_sentinel = sentinel_contents.count()
-
-        if num_sentinel == 0:
-            sentinel_portion = 0
-
-        max_num_tasks_possible = int((unassigned_contents.count() / (1 - sentinel_portion)) / num_content_per_task)
-
-        if max_num_tasks is None:
-            # assign all unassigned
-            num_tasks = max_num_tasks_possible
-            num_to_assign = unassigned_contents.count()
-        else:
-            num_tasks = min(max_num_tasks_possible, max_num_tasks)
-            num_to_assign = int(num_tasks * num_content_per_task * (1 - sentinel_portion))
-
-        num_total_contents = num_tasks * num_content_per_task
-        num_sentinel_to_assign = num_total_contents - num_to_assign
-
-        print('Going to create %d tasks for %d unassigned contents and %d sentinel contents' % \
-              (num_tasks, num_to_assign, num_sentinel_to_assign))
-        if input('Continue? [y/n] ') != 'y':
-            print('Aborted.')
-            return
-
-        # positive number means the index of content to assign
-        # negative number means the (-index-1) of sentinel
-        content_indices = [-(i % num_sentinel + 1) for i in range(num_sentinel_to_assign)] + \
-                          list(range(num_to_assign))
-        random.shuffle(content_indices)
-
-        for i in tqdm(range(num_tasks)):
-            task = Task(project=self)
-            task.save(create_hit=True)
-            for j in range(num_content_per_task):
-                content_index = content_indices[i * num_content_per_task + j]
-                if content_index < 0:
-                    content = sentinel_contents[-content_index - 1]
-                else:
-                    content = unassigned_contents[content_index]
-                content.tasks.add(task)
-                content.save()
 
     # total number of contents in this project
     def num_contents(self):
@@ -198,10 +143,19 @@ class Task(ModelBase):
         related_name='tasks'
     )
 
+    hit_type = models.ForeignKey(
+        MturkHitType
+    )
     hit = models.OneToOneField(MturkHit, null=True, related_name='task')
 
-    # default is project.hit_settings.max_assignments
+    # mirrors to hit.max_assignments
     num_submissions_required = models.PositiveSmallIntegerField()
+
+    # mirrors to hit.lifetime
+    lifetime = models.DurationField(default=timedelta(days=7))
+
+    # mirrors to hit.question
+    question = models.TextField()
 
     # task is completed, set automatically
     completed = models.BooleanField(default=False)
@@ -236,15 +190,13 @@ class Task(ModelBase):
         for c in self.contents.filter(status='P'):
             c.save()
 
-
     def save(self, create_hit=True, *args, **kwargs):
         # set self.hit
         if self.hit is None and create_hit:
+            hit = MturkHit(
+                hit_type = self.hit_type
+            )
             self.hit = self.project.hit_settings.new_hit()
-
-        # set self.num_submissions_required
-        if self.num_submissions_required is None:
-            self.num_submissions_required = self.project.hit_settings.max_assignments
 
         # set or update self.completed
         self.completed = (self.num_submissions() >= self.num_submissions_required)

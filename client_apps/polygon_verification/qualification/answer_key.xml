@@ -1,0 +1,96 @@
+<AnswerKey xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2005-10-01/AnswerKey.xsd">
+  <Question>
+    <QuestionIdentifier>Q1</QuestionIdentifier>
+    <AnswerOption>
+      <SelectionIdentifier>C</SelectionIdentifier>
+      <AnswerScore>10</AnswerScore>
+    </AnswerOption>
+  </Question>
+
+
+  <Question>
+    <QuestionIdentifier>Q2</QuestionIdentifier>
+    <AnswerOption>
+      <SelectionIdentifier>W</SelectionIdentifier>
+      <AnswerScore>10</AnswerScore>
+    </AnswerOption>
+  </Question>
+
+
+  <Question>
+    <QuestionIdentifier>Q3</QuestionIdentifier>
+    <AnswerOption>
+      <SelectionIdentifier>W</SelectionIdentifier>
+      <AnswerScore>10</AnswerScore>
+    </AnswerOption>
+  </Question>
+
+
+  <Question>
+    <QuestionIdentifier>Q4</QuestionIdentifier>
+    <AnswerOption>
+      <SelectionIdentifier>W</SelectionIdentifier>
+      <AnswerScore>10</AnswerScore>
+    </AnswerOption>
+  </Question>
+
+
+  <Question>
+    <QuestionIdentifier>Q5</QuestionIdentifier>
+    <AnswerOption>
+      <SelectionIdentifier>W</SelectionIdentifier>
+      <AnswerScore>10</AnswerScore>
+    </AnswerOption>
+  </Question>
+
+
+  <Question>
+    <QuestionIdentifier>Q6</QuestionIdentifier>
+    <AnswerOption>
+      <SelectionIdentifier>C</SelectionIdentifier>
+      <AnswerScore>10</AnswerScore>
+    </AnswerOption>
+  </Question>
+
+
+  <Question>
+    <QuestionIdentifier>Q7</QuestionIdentifier>
+    <AnswerOption>
+      <SelectionIdentifier>C</SelectionIdentifier>
+      <AnswerScore>10</AnswerScore>
+    </AnswerOption>
+  </Question>
+
+
+  <Question>
+    <QuestionIdentifier>Q8</QuestionIdentifier>
+    <AnswerOption>
+      <SelectionIdentifier>W</SelectionIdentifier>
+      <AnswerScore>10</AnswerScore>
+    </AnswerOption>
+  </Question>
+
+
+  <Question>
+    <QuestionIdentifier>Q9</QuestionIdentifier>
+    <AnswerOption>
+      <SelectionIdentifier>W</SelectionIdentifier>
+      <AnswerScore>10</AnswerScore>
+    </AnswerOption>
+  </Question>
+
+
+  <Question>
+    <QuestionIdentifier>Q10</QuestionIdentifier>
+    <AnswerOption>
+      <SelectionIdentifier>C</SelectionIdentifier>
+      <AnswerScore>10</AnswerScore>
+    </AnswerOption>
+  </Question>
+
+  <QualificationValueMapping>
+    <PercentageMapping>
+      <MaximumSummedScore>100</MaximumSummedScore>
+    </PercentageMapping>
+  </QualificationValueMapping>
+</AnswerKey>

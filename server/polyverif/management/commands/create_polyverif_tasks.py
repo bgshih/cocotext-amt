@@ -3,8 +3,13 @@ import json
 from tqdm import tqdm
 
 from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
 
-from polyverif.models import Project
+from polyverif.models import Project, Task
+
+
+HIT_QUESTION = """
+"""
 
 
 class Command(BaseCommand):
@@ -20,7 +25,89 @@ class Command(BaseCommand):
             help='Number of tasks to create',
         )
 
+        parser.add_argument(
+            '--num_content_per_task',
+            action='store',
+            dest='num_content_per_task',
+            default=9,
+            type=int,
+            help='Number of contents per task'
+        )
+
+        parser.add_argument(
+            '--sentinel_portion',
+            action='store',
+            dest='sentinel_portion',
+            default=0.1,
+            type=float,
+            help='Portion of sentinel contents'
+        )
+
+    def create_tasks(self,
+                     project,
+                     num_content_per_task,
+                     sentinel_portion,
+                     max_num_tasks=None):
+        """ Create new tasks from pending and sentinel contents """
+        # constants
+        # num_content_per_task = settings.POLYVERIF_NUM_CONTENT_PER_TASK
+        # sentinel_portion = settings.POLYVERIF_SENTINEL_PORTION
+
+        unassigned_contents = project.contents.filter(status='U')
+        sentinel_contents = project.contents.filter(sentinel=True)
+        num_sentinel = sentinel_contents.count()
+
+        if num_sentinel == 0:
+            sentinel_portion = 0
+
+        max_num_tasks_possible = int((unassigned_contents.count() / (1 - sentinel_portion)) / num_content_per_task)
+
+        if max_num_tasks is None:
+            # assign all unassigned
+            num_tasks = max_num_tasks_possible
+            num_to_assign = unassigned_contents.count()
+        else:
+            num_tasks = min(max_num_tasks_possible, max_num_tasks)
+            num_to_assign = int(num_tasks * num_content_per_task * (1 - sentinel_portion))
+
+        num_total_contents = num_tasks * num_content_per_task
+        num_sentinel_to_assign = num_total_contents - num_to_assign
+
+        # prompt for continue
+        print('Going to create %d tasks for %d unassigned contents and %d sentinel contents' % \
+              (num_tasks, num_to_assign, num_sentinel_to_assign))
+        if input('Continue? [y/n] ') != 'y':
+            print('Aborted.')
+            return
+
+        # positive number means the index of content to assign
+        # negative number means the (-index-1) of sentinel
+        content_indices = [-(i % num_sentinel + 1) for i in range(num_sentinel_to_assign)] + \
+                          list(range(num_to_assign))
+        random.shuffle(content_indices)
+
+        for i in tqdm(range(num_tasks)):
+            task = Task(
+                project=project
+                num_submissions_required=
+                
+                )
+            task.save(create_hit=True)
+            for j in range(num_content_per_task):
+                content_index = content_indices[i * num_content_per_task + j]
+                if content_index < 0:
+                    content = sentinel_contents[-content_index - 1]
+                else:
+                    content = unassigned_contents[content_index]
+                content.tasks.add(task)
+                content.save()
+
+
     def handle(self, *args, **options):
-        max_num_tasks = options['max_num_tasks']
         project = Project.objects.get(name='PolygonVerification')
-        project.create_tasks(max_num_tasks=max_num_tasks)
+        create_tasks(
+            project=project,
+            num_content_per_task=options['num_content_per_task'],
+            sentinel_portion=options['sentinel_portion'],
+            max_num_tasks=options['max_num_tasks']
+        )

@@ -1,0 +1,388 @@
+<QuestionForm xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2005-10-01/QuestionForm.xsd">
+  <Overview>
+    <Title>Read the instructions and finish the tests.</Title>
+    <FormattedContent><![CDATA[
+      <h3>Job Description</h3>
+
+      <p>We are collecting a dataset of text in natural images. In this dataset, each word should be annotated by a polygon that tightly surrounds it. We have some existing annotations. Your job is to judge these annotations.</p>
+      <p>You will see a grid of cards, each an annotation. Click on the cards to mark them as correct (green) or wrong (red). Submit after marking all cards.</p>
+
+      <h3>Examples (click to enlarge)</h3>
+      <a href="https://s3.amazonaws.com/cocotext-amt-resource/polygon-verification-examples.jpg">
+        <img alt="Examples"
+             src="https://s3.amazonaws.com/cocotext-amt-resource/polygon-verification-examples.jpg"
+             width="800" />
+      </a>
+    ]]></FormattedContent>
+  </Overview>
+
+  <Question>
+    <!-- Q1 -->
+    <QuestionIdentifier>Q1</QuestionIdentifier>
+    <DisplayName>Question-1</DisplayName>
+    <IsRequired>true</IsRequired>
+    <QuestionContent>
+      <Text>Is this annotation correct?</Text>
+      <Binary>
+        <MimeType>
+          <Type>image</Type>
+          <SubType>png</SubType>
+        </MimeType>
+        <DataURL>
+          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q1.png
+        </DataURL>
+        <AltText>Question-1</AltText>
+      </Binary>
+    </QuestionContent>
+
+    <AnswerSpecification>
+      <SelectionAnswer>
+        <StyleSuggestion>radiobutton</StyleSuggestion>
+        <Selections>
+          <Selection>
+            <SelectionIdentifier>W</SelectionIdentifier>
+            <Text>Wrong</Text>
+          </Selection>
+          <Selection>
+            <SelectionIdentifier>C</SelectionIdentifier>
+            <Text>Correct</Text>
+          </Selection>
+        </Selections>
+      </SelectionAnswer>
+    </AnswerSpecification>
+  </Question>
+
+
+  <Question>
+    <!-- Q2 -->
+    <QuestionIdentifier>Q2</QuestionIdentifier>
+    <DisplayName>Question-2</DisplayName>
+    <IsRequired>true</IsRequired>
+    <QuestionContent>
+      <Text>Is this annotation correct?</Text>
+      <Binary>
+        <MimeType>
+          <Type>image</Type>
+          <SubType>png</SubType>
+        </MimeType>
+        <DataURL>
+          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q2.png
+        </DataURL>
+        <AltText>Question-2</AltText>
+      </Binary>
+    </QuestionContent>
+
+    <AnswerSpecification>
+      <SelectionAnswer>
+        <StyleSuggestion>radiobutton</StyleSuggestion>
+        <Selections>
+          <Selection>
+            <SelectionIdentifier>W</SelectionIdentifier>
+            <Text>Wrong</Text>
+          </Selection>
+          <Selection>
+            <SelectionIdentifier>C</SelectionIdentifier>
+            <Text>Correct</Text>
+          </Selection>
+        </Selections>
+      </SelectionAnswer>
+    </AnswerSpecification>
+  </Question>
+
+
+  <Question>
+    <!-- Q3 -->
+    <QuestionIdentifier>Q3</QuestionIdentifier>
+    <DisplayName>Question-3</DisplayName>
+    <IsRequired>true</IsRequired>
+    <QuestionContent>
+      <Text>Is this annotation correct?</Text>
+      <Binary>
+        <MimeType>
+          <Type>image</Type>
+          <SubType>png</SubType>
+        </MimeType>
+        <DataURL>
+          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q3.png
+        </DataURL>
+        <AltText>Question-3</AltText>
+      </Binary>
+    </QuestionContent>
+
+    <AnswerSpecification>
+      <SelectionAnswer>
+        <StyleSuggestion>radiobutton</StyleSuggestion>
+        <Selections>
+          <Selection>
+            <SelectionIdentifier>W</SelectionIdentifier>
+            <Text>Wrong</Text>
+          </Selection>
+          <Selection>
+            <SelectionIdentifier>C</SelectionIdentifier>
+            <Text>Correct</Text>
+          </Selection>
+        </Selections>
+      </SelectionAnswer>
+    </AnswerSpecification>
+  </Question>
+
+
+  <Question>
+    <!-- Q4 -->
+    <QuestionIdentifier>Q4</QuestionIdentifier>
+    <DisplayName>Question-4</DisplayName>
+    <IsRequired>true</IsRequired>
+    <QuestionContent>
+      <Text>Is this annotation correct?</Text>
+      <Binary>
+        <MimeType>
+          <Type>image</Type>
+          <SubType>png</SubType>
+        </MimeType>
+        <DataURL>
+          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q4.png
+        </DataURL>
+        <AltText>Question-4</AltText>
+      </Binary>
+    </QuestionContent>
+
+    <AnswerSpecification>
+      <SelectionAnswer>
+        <StyleSuggestion>radiobutton</StyleSuggestion>
+        <Selections>
+          <Selection>
+            <SelectionIdentifier>W</SelectionIdentifier>
+            <Text>Wrong</Text>
+          </Selection>
+          <Selection>
+            <SelectionIdentifier>C</SelectionIdentifier>
+            <Text>Correct</Text>
+          </Selection>
+        </Selections>
+      </SelectionAnswer>
+    </AnswerSpecification>
+  </Question>
+
+
+  <Question>
+    <!-- Q5 -->
+    <QuestionIdentifier>Q5</QuestionIdentifier>
+    <DisplayName>Question-5</DisplayName>
+    <IsRequired>true</IsRequired>
+    <QuestionContent>
+      <Text>Is this annotation correct?</Text>
+      <Binary>
+        <MimeType>
+          <Type>image</Type>
+          <SubType>png</SubType>
+        </MimeType>
+        <DataURL>
+          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q5.png
+        </DataURL>
+        <AltText>Question-5</AltText>
+      </Binary>
+    </QuestionContent>
+
+    <AnswerSpecification>
+      <SelectionAnswer>
+        <StyleSuggestion>radiobutton</StyleSuggestion>
+        <Selections>
+          <Selection>
+            <SelectionIdentifier>W</SelectionIdentifier>
+            <Text>Wrong</Text>
+          </Selection>
+          <Selection>
+            <SelectionIdentifier>C</SelectionIdentifier>
+            <Text>Correct</Text>
+          </Selection>
+        </Selections>
+      </SelectionAnswer>
+    </AnswerSpecification>
+  </Question>
+
+
+  <Question>
+    <!-- Q6 -->
+    <QuestionIdentifier>Q6</QuestionIdentifier>
+    <DisplayName>Question-6</DisplayName>
+    <IsRequired>true</IsRequired>
+    <QuestionContent>
+      <Text>Is this annotation correct?</Text>
+      <Binary>
+        <MimeType>
+          <Type>image</Type>
+          <SubType>png</SubType>
+        </MimeType>
+        <DataURL>
+          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q6.png
+        </DataURL>
+        <AltText>Question-6</AltText>
+      </Binary>
+    </QuestionContent>
+
+    <AnswerSpecification>
+      <SelectionAnswer>
+        <StyleSuggestion>radiobutton</StyleSuggestion>
+        <Selections>
+          <Selection>
+            <SelectionIdentifier>W</SelectionIdentifier>
+            <Text>Wrong</Text>
+          </Selection>
+          <Selection>
+            <SelectionIdentifier>C</SelectionIdentifier>
+            <Text>Correct</Text>
+          </Selection>
+        </Selections>
+      </SelectionAnswer>
+    </AnswerSpecification>
+  </Question>
+
+
+  <Question>
+    <!-- Q7 -->
+    <QuestionIdentifier>Q7</QuestionIdentifier>
+    <DisplayName>Question-7</DisplayName>
+    <IsRequired>true</IsRequired>
+    <QuestionContent>
+      <Text>Is this annotation correct?</Text>
+      <Binary>
+        <MimeType>
+          <Type>image</Type>
+          <SubType>png</SubType>
+        </MimeType>
+        <DataURL>
+          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q7.png
+        </DataURL>
+        <AltText>Question-7</AltText>
+      </Binary>
+    </QuestionContent>
+
+    <AnswerSpecification>
+      <SelectionAnswer>
+        <StyleSuggestion>radiobutton</StyleSuggestion>
+        <Selections>
+          <Selection>
+            <SelectionIdentifier>W</SelectionIdentifier>
+            <Text>Wrong</Text>
+          </Selection>
+          <Selection>
+            <SelectionIdentifier>C</SelectionIdentifier>
+            <Text>Correct</Text>
+          </Selection>
+        </Selections>
+      </SelectionAnswer>
+    </AnswerSpecification>
+  </Question>
+
+
+  <Question>
+    <!-- Q8 -->
+    <QuestionIdentifier>Q8</QuestionIdentifier>
+    <DisplayName>Question-8</DisplayName>
+    <IsRequired>true</IsRequired>
+    <QuestionContent>
+      <Text>Is this annotation correct?</Text>
+      <Binary>
+        <MimeType>
+          <Type>image</Type>
+          <SubType>png</SubType>
+        </MimeType>
+        <DataURL>
+          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q8.png
+        </DataURL>
+        <AltText>Question-8</AltText>
+      </Binary>
+    </QuestionContent>
+
+    <AnswerSpecification>
+      <SelectionAnswer>
+        <StyleSuggestion>radiobutton</StyleSuggestion>
+        <Selections>
+          <Selection>
+            <SelectionIdentifier>W</SelectionIdentifier>
+            <Text>Wrong</Text>
+          </Selection>
+          <Selection>
+            <SelectionIdentifier>C</SelectionIdentifier>
+            <Text>Correct</Text>
+          </Selection>
+        </Selections>
+      </SelectionAnswer>
+    </AnswerSpecification>
+  </Question>
+
+
+  <Question>
+    <!-- Q9 -->
+    <QuestionIdentifier>Q9</QuestionIdentifier>
+    <DisplayName>Question-9</DisplayName>
+    <IsRequired>true</IsRequired>
+    <QuestionContent>
+      <Text>Is this annotation correct?</Text>
+      <Binary>
+        <MimeType>
+          <Type>image</Type>
+          <SubType>png</SubType>
+        </MimeType>
+        <DataURL>
+          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q9.png
+        </DataURL>
+        <AltText>Question-9</AltText>
+      </Binary>
+    </QuestionContent>
+
+    <AnswerSpecification>
+      <SelectionAnswer>
+        <StyleSuggestion>radiobutton</StyleSuggestion>
+        <Selections>
+          <Selection>
+            <SelectionIdentifier>W</SelectionIdentifier>
+            <Text>Wrong</Text>
+          </Selection>
+          <Selection>
+            <SelectionIdentifier>C</SelectionIdentifier>
+            <Text>Correct</Text>
+          </Selection>
+        </Selections>
+      </SelectionAnswer>
+    </AnswerSpecification>
+  </Question>
+
+
+  <Question>
+    <!-- Q10 -->
+    <QuestionIdentifier>Q10</QuestionIdentifier>
+    <DisplayName>Question-10</DisplayName>
+    <IsRequired>true</IsRequired>
+    <QuestionContent>
+      <Text>Is this annotation correct?</Text>
+      <Binary>
+        <MimeType>
+          <Type>image</Type>
+          <SubType>png</SubType>
+        </MimeType>
+        <DataURL>
+          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q10.png
+        </DataURL>
+        <AltText>Question-10</AltText>
+      </Binary>
+    </QuestionContent>
+
+    <AnswerSpecification>
+      <SelectionAnswer>
+        <StyleSuggestion>radiobutton</StyleSuggestion>
+        <Selections>
+          <Selection>
+            <SelectionIdentifier>W</SelectionIdentifier>
+            <Text>Wrong</Text>
+          </Selection>
+          <Selection>
+            <SelectionIdentifier>C</SelectionIdentifier>
+            <Text>Correct</Text>
+          </Selection>
+        </Selections>
+      </SelectionAnswer>
+    </AnswerSpecification>
+  </Question>
+
+</QuestionForm>
