@@ -1,5 +1,6 @@
 import json
 from datetime import timedelta
+from decimal import Decimal
 
 from django.db import models
 from django.contrib.postgres.fields import JSONField
@@ -23,7 +24,7 @@ class ModelBase(models.Model):
 ################################################################################
 
 class CocoTextImage(ModelBase):
-    id = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True) # Use MSCOCO image ID
+    image_id = models.CharField(max_length=MAX_ID_LENGTH, unique=True) # Use MSCOCO image ID
     filename = models.CharField(max_length=256)
     width = models.PositiveIntegerField()
     height = models.PositiveIntegerField()
@@ -41,7 +42,7 @@ class CocoTextImage(ModelBase):
 
 class CocoTextInstance(ModelBase):
     # If imported from v1, use original ID
-    id = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
+    instance_id = models.CharField(max_length=MAX_ID_LENGTH, unique=True)
     image = models.ForeignKey(CocoTextImage, on_delete=models.CASCADE)
     # Polygon format: [{x: number, y: number}, ...]
     polygon = JSONField()
@@ -83,219 +84,218 @@ class CocoTextInstance(ModelBase):
 ################################################################################
 
 class MturkHitType(ModelBase):
-    # obtained from MTurk
-    id = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
-
+    hit_type_id         = models.CharField(max_length=MAX_ID_LENGTH, unique=True)
     auto_approval_delay = models.DurationField(default=timedelta(days=14))
     assignment_duration = models.DurationField(default=timedelta(hours=1))
     reward              = models.DecimalField(decimal_places=2, max_digits=4)
     title               = models.CharField(max_length=256)
     keywords            = models.CharField(max_length=256)
     description         = models.TextField()
+    qrequirements       = JSONField(null=True)
 
-    def save(self, client=None, *args, **kwargs):
+    FIELD_PARAM_MAPPINGS = (
+        ('hit_type_id', 'HITTypeId'),
+        ('auto_approval_delay', 'AutoApprovalDelayInSeconds',
+            lambda f: int(f.total_seconds()),
+            lambda p: timedelta(seconds=p)),
+        ('assignment_duration', 'AssignmentDurationInSeconds',
+            lambda f: int(f.total_seconds()),
+            lambda p: timedelta(seconds=p)),
+        ('reward', 'Reward',
+            lambda f: str(f),
+            lambda p: Decimal(p)),
+        ('title', 'Title'),
+        ('keywords', 'Keywords'),
+        ('description', 'Description'),
+        ('qrequirements', 'QualificationRequirements')
+        # # FK related names
+        # ('qualification_requirements', 'QualificationRequirements',
+        #     lambda f: [r.to_params() for r in f],
+        #     None)
+    )
+
+    def save(self, *args, **kwargs):
         if not self.id:
-            client = client or get_mturk_client()
-            params = {
-                'AutoApprovalDelayInSeconds': int(self.auto_approval_delay.total_seconds()),
-                'AssignmentDurationInSeconds': int(self.assignment_duration.total_seconds()),
-                'Reward': str(self.reward),
-                'Title': self.title,
-                'Keywords': self.keywords,
-                'Description': self.description,
-                'QualificationRequirements': [],
-            }
-            for requirement in self.qualification_requirements.all():
-                params['QualificationRequirements'].append(requirement.to_params())
-            
-            response = client.create_hit_type(**params)
+            params = get_parameters_from_fields(self, self.FIELD_PARAM_MAPPINGS,
+                ('auto_approval_delay', 'assignment_duration', 'reward', 'title',
+                 'keywords', 'description', 'qualification_requirements')
+            )
+            response = get_mturk_client().create_hit_type(**params)
             print('HITType {} created on MTurk'.format(response['HITTypeId']))
-
-            self.id = response['HITTypeId']
-        
+            self.hit_type_id = response['HITTypeId']
         super(HitType, self).save(*args, **kwargs)
     
     def __str__(self):
         return str(self.id)
 
+    class Meta:
+        abstract = True
+
 
 class MturkWorker(ModelBase):
     # obtained from AMT
-    id = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
+    worker_id = models.CharField(
+        max_length=MAX_ID_LENGTH
+        unique=True
+    )
 
     # should be set by calling block() and unblock()
     blocked = models.BooleanField(default=False)
 
-    @classmethod
-    def get_or_create(cls, worker_id):
-        try:
-            worker = cls.objects.get(id=worker_id)
-        except MturkWorker.DoesNotExist:
-            worker = cls(id=worker_id)
-            worker.save()
-        return worker
+    block_reason = models.TextField()
+    unblock_reason = models.TextField()
 
-    def block(self, client=None, reason=None):
-        client = client or get_mturk_client()
-        params = {
-            'WorkerId': self.id,
-        }
-        if reason is not None:
-            params['Reason'] = reason
-        client.create_worker_block(**params)
-        print('MTurk Worker {} has been blocked from all HITs'.format(self.id))
+    FIELD_PARAM_MAPPINGS = (
+        ('worker_id', 'WorkerId'),
+        ('block_reason', 'Reason'),
+        ('unblock_reason', 'Reason')
+    )
+
+    def block(self):
+        raise NotImplementedError('Banning workers are not encouraged.')
+
+        params = get_parameters_from_fields(
+            self, self.FIELD_PARAM_MAPPINGS,
+            ('worker_id', 'block_reason'),
+            skipe_none=True
+        )
+        get_mturk_client().create_worker_block(**params)
+        print('MTurk Worker {} has been blocked from all HITs'.format(self.worker_id))
         self.blocked = True
         self.save()
 
-    def unblock(self, client=None, reason=None):
-        client = client or get_mturk_client()
-        params = {
-            'WorkerId': self.id,
-        }
-        if reason is not None:
-            params['Reason'] = reason
-        client.delete_worker_block(**params)
+    def unblock(self):
+        params = get_parameters_from_fields(
+            self, self.FIELD_PARAM_MAPPINGS,
+            ('worker_id', 'unblock_reason'),
+            skipe_none=True
+        )
+        get_mturk_client().delete_worker_block(**params)
         print('MTurk Worker {} has been unblocked from all HITs'.format(self.id))
         self.blocked = False
         self.save()
 
     def __str__(self):
-        return self.id
+        return self.worker_id
+
+    class Meta:
+        abstract = True
 
 
 class MturkHit(ModelBase):
-    # obtained from MTurk
-    id = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
-
-    hit_type = models.ForeignKey(MturkHitType, related_name='hits')
-
-    hit_layout_id = models.CharField(max_length=MAX_ID_LENGTH, null=True)
-    hit_layout_parameters = JSONField(null=True)
-
-    # obatined from MTurk
-    hit_group_id = models.CharField(max_length=MAX_ID_LENGTH)
-    creation_time = models.DateTimeField()
+    """MTurk HIT"""
 
     HIT_STATUS_CHOICES = (
         ('A', 'Assignable'),
         ('U', 'Unassignable'),
         ('R', 'Reviewable'),
         ('E', 'Reviewing'),
-        ('D', 'Disposed'))
-    hit_status_str_to_key = dict((v, k) for (k, v) in HIT_STATUS_CHOICES)
-    hit_status_key_to_str = dict((k, v) for (k, v) in HIT_STATUS_CHOICES)
-    hit_status = models.CharField(
-        max_length=1,
-        choices=HIT_STATUS_CHOICES
+        ('D', 'Disposed')
     )
-
-    max_assignments = models.PositiveSmallIntegerField()
-    lifetime = models.DurationField()
-    question = models.TextField()
-    
-    expiration = models.DateTimeField()
-    requester_annotation = models.TextField(null=True)
-    unique_request_token = models.CharField(max_length=MAX_ID_LENGTH, null=True)
+    hit_status_key_to_str = dict((k, v) for (k, v) in HIT_STATUS_CHOICES)
+    hit_status_str_to_key = dict((v, k) for (k, v) in HIT_STATUS_CHOICES)
 
     REVIEW_STATUS_CHOICES = (
         ('N', 'NotReviewed'),
         ('M', 'MarkedForReview'),
         ('A', 'ReviewedAppropriate'),
-        ('I', 'ReviewedInappropriate'))
-    review_status_str_to_key = dict((v, k) for (k, v) in REVIEW_STATUS_CHOICES)
-    review_status_key_to_str = dict((k, v) for (k, v) in REVIEW_STATUS_CHOICES)
-    hit_review_status = models.CharField(
-        max_length=1,
-        choices=REVIEW_STATUS_CHOICES
+        ('I', 'ReviewedInappropriate')
     )
+    review_status_key_to_str = dict((k, v) for (k, v) in REVIEW_STATUS_CHOICES)
+    review_status_str_to_key = dict((v, k) for (k, v) in REVIEW_STATUS_CHOICES)
 
-    # obtained from MTurk
+    hit_id                    = models.CharField(max_length=MAX_ID_LENGTH, unique=True)
+    hit_type_id               = models.CharField(max_length=MAX_ID_LENGTH)
+    hit_layout_id             = models.CharField(max_length=MAX_ID_LENGTH, null=True)
+    hit_layout_parameters     = JSONField(null=True)
+    hit_group_id              = models.CharField(max_length=MAX_ID_LENGTH)
+    creation_time             = models.DateTimeField()
+    hit_status                = models.CharField(max_length=1,
+                                                 choices=HIT_STATUS_CHOICES)
+    max_assignments           = models.PositiveSmallIntegerField()
+    lifetime                  = models.DurationField()
+    question                  = models.TextField()
+    expiration                = models.DateTimeField()
+    requester_annotation      = models.TextField(null=True)
+    unique_request_token      = models.CharField(max_length=MAX_ID_LENGTH, null=True)
+    hit_review_status         = models.CharField(max_length=1,
+                                                 choices=REVIEW_STATUS_CHOICES)
     num_assignments_pending   = models.PositiveSmallIntegerField()
     num_assignments_available = models.PositiveSmallIntegerField()
     num_assignments_completed = models.PositiveSmallIntegerField()
+    assignment_review_policy  = JSONField(null=True)
+    hit_review_policy         = JSONField(null=True)
 
-    assignment_review_policy = JSONField(null=True)
-    hit_review_policy = JSONField(null=True)
+    FIELD_PARAM_MAPPINGS = (
+        ('hit_id', 'HITId'),
+        ('hit_type_id', 'HITTypeId'),
+        ('hit_layout_id', 'HITLayoutId'),
+        ('hit_layout_parameters', 'HITLayoutParameters'),
+        ('hit_group_id', 'HITGroupId'),
+        ('creation_time', 'CreationTime'),
+        ('hit_status', 'HITStatus',
+            lambda f, D=hit_status_key_to_str: D[f],
+            lambda p, D=hit_status_str_to_key: D[p]),
+        ('max_assignments', 'MaxAssignments'),
+        ('lifetime', 'LifetimeInSeconds',
+            lambda f: int(f.total_seconds()),
+            lambda p: timedelta(seconds=p)),
+        ('question', 'Question'),
+        ('expiration', 'Expiration'),
+        ('requester_annotation', 'RequesterAnnotation'),
+        ('unique_request_token', 'UniqueRequestToken'),
+        ('hit_review_status', 'HITReviewStatus',
+            lambda f, D=review_status_str_to_key: D[f],
+            lambda p: D=review_status_key_to_str: D[p]),
+        ('num_assignments_pending', 'NumberOfAssignmentsPending'),
+        ('num_assignments_available', 'NumberOfAssignmentsAvailable'),
+        ('num_assignments_completed', 'NumberOfAssignmentsCompleted'),
+        ('assignment_review_policy', 'AssignmentReviewPolicy'),
+        ('hit_review_policy', 'HITReviewPolicy')
+    )
 
-    def approve(self, client=None, feedback=None, override_rejection=False):
-        client = client or get_mturk_client()
-        params = {
-            'AssignmentId': self.id,
-            'OverrideRejection': override_rejection
-        }
-        if feedback is not None:
-            params['RequesterFeedback'] = feedback
-        client.approve_assignment(**params)
-        print('Assignment {} approved'.format(self.id))
+    def sync_assignments(self):
+        response = get_mturk_client().list_assignments_for_hit(
+            HITId=self.hit_id,
+            MaxResults=100, # assignments should never exceed 100
+            AssignmentStatuses=['Submitted', 'Approved', 'Rejected']
+        )['Assignments']
+        for assignment_response in response:
+            MturkAssignment.create_or_update_from_response(assignment_response, save=True)
 
-    def reject(self, client=None, feedback=None):
-        client = client or get_mturk_client()
-        params = {
-            'AssignmentId': self.id,
-        }
-        if feedback is not None:
-            params['RequesterFeedback'] = feedback
-        client.reject_assignment(**params)
-        print('Assignment {} rejected'.format(self.id))
-
-    def sync(self, client=None, sync_assignments=True):
-        """ Sync status with AMT, also sync its assignments """
-        client = client or get_mturk_client()
-        response = client.get_hit(HITId=self.id)['HIT']
-
-        self.hit_status                = self.hit_status_str_to_key[response['HITStatus']]
-        self.review_status             = self.review_status_str_to_key[response['HITReviewStatus']]
-        self.num_assignments_pending   = response['NumberOfAssignmentsPending']
-        self.num_assignments_available = response['NumberOfAssignmentsAvailable']
-        self.num_assignments_completed = response['NumberOfAssignmentsCompleted']
-
+    def sync(self, sync_assignments=True):
+        """Sync status with AMT, also sync its assignments """
+        response = get_mturk_client().get_hit(HITId=self.hit_id)['HIT']
+        set_fields_from_params(
+            self, response, self.FIELD_PARAM_MAPPINGS,
+            ('hit_status', 'hit_review_status', 'num_assignments_pending',
+             'num_assignments_available', 'num_assignments_completed')
+        )
         self.save()
 
-        # update all assignments
         if sync_assignments:
-            response = client.list_assignments_for_hit(
-                HITId=self.id,
-                MaxResults=100, # assignments should never exceed 100
-                AssignmentStatuses=['Submitted', 'Approved', 'Rejected']
-            )['Assignments']
-            for assignment_response in response:
-                MturkAssignment.create_or_update_from_response(assignment_response, save=True)
+            self.sync_assignments()
 
-    def save(self, client=None, *args, **kwargs):
+    def save(self, *args, **kwargs):
         if not self.id: # ID is None or empty string
-            client = client or get_mturk_client()
-
-            params = {
-                'HITTypeId': self.hit_type.id,
-                'MaxAssignments': self.max_assignments,
-                'LifetimeInSeconds': int(self.lifetime.total_seconds()),
-                'Question': self.question
-            }
-            optional_key_field_pairs = (
-                ('RequesterAnnotation', self.requester_annotation),
-                ('UniqueRequestToken', self.unique_request_token),
-                ('AssignmentReviewPolicy', self.assignment_review_policy),
-                ('HITReviewPolicy', self.hit_review_policy),
-                ('HITLayoutId', self.hit_layout_id),
-                ('HITLayoutParameters', self.hit_layout_parameters)
+            # create a new HIT
+            params = get_parameters_from_fields(
+                self, self.FIELD_PARAM_MAPPINGS,
+                ('hit_type_id', 'max_assignments', 'lifetime', 'question',
+                 'requester_annotation', 'unique_request_token', 'assignment_review_policy',
+                 'hit_review_policy', 'hit_layout_id', 'hit_layout_parameters'),
+                skip_none=True
             )
-            for k, v in optional_key_field_pairs:
-                if v is not None:
-                    params[k] = v
-            response = client.create_hit_with_hit_type(**params)['HIT']
-            print('HIT {} created on MTurk with HITType {}'.format(response['HITId'], response['HITTypeId']))
+            response = get_mturk_client().create_hit_with_hit_type(**params)['HIT']
+            print('HIT {} created on MTurk with HITType {}'.format(
+                response['HITId'], response['HITTypeId']))
 
-            self.id                        = response['HITId']
-            self.hit_group_id              = response['HITGroupId']
-            self.creation_time             = response['CreationTime']
-            self.expiration                = response['Expiration']
-            self.hit_status                = self.hit_status_str_to_key[response['HITStatus']]
-            self.review_status             = self.review_status_str_to_key[response['HITReviewStatus']]
-            self.num_assignments_pending   = response['NumberOfAssignmentsPending']
-            self.num_assignments_available = response['NumberOfAssignmentsAvailable']
-            self.num_assignments_completed = response['NumberOfAssignmentsCompleted']
-
-            assert(self.hit_type.id == response['HITTypeId'])
+            set_fields_from_params(
+                self, response, self.FIELD_PARAM_MAPPINGS,
+                ('hit_id', 'hit_group_id', 'creation_time', 'expiration', 'hit_status',
+                 'hit_review_status', 'num_assignments_pending', 'num_assignments_available',
+                 'num_assignments_completed')
+            )
 
         super(MturkHit, self).save(*args, **kwargs)
 
@@ -304,204 +304,206 @@ class MturkHit(ModelBase):
 
 
 class MturkAssignment(ModelBase):
-    id     = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
-    worker = models.ForeignKey(MturkWorker, related_name='assignments', null=True)
-    hit    = models.ForeignKey(MturkHit, related_name='assignments')
-
     ASSIGNMENT_STATUS_CHOICES = (
         ('S', 'Submitted'),
         ('A', 'Approved'),
-        ('R', 'Rejected'))
-    status_string_to_key = { v:k for k,v in ASSIGNMENT_STATUS_CHOICES }
-    assignment_status = models.CharField(max_length=1,
-                                         choices=ASSIGNMENT_STATUS_CHOICES)
+        ('R', 'Rejected')
+    )
+    assignment_status_key_to_str = dict((k,v) for (k,v) in ASSIGNMENT_STATUS_CHOICES)
+    assignment_status_str_to_key = dict((v,k) for (k,v) in ASSIGNMENT_STATUS_CHOICES)
     
+    assignment_id      = models.CharField(max_length=MAX_ID_LENGTH, unique=True)
+    assignment_status  = models.CharField(max_length=1, choices=ASSIGNMENT_STATUS_CHOICES)
+    worker_id          = models.CharField(max_length=MAX_ID_LENGTH)
+    hit_id             = models.CharField(max_length=MAX_ID_LENGTH)
     auto_approval_time = models.DateTimeField(null=True)
     accept_time        = models.DateTimeField(null=True)
     submit_time        = models.DateTimeField(null=True)
     approval_time      = models.DateTimeField(null=True)
     rejection_time     = models.DateTimeField(null=True)
     deadline           = models.DateTimeField(null=True)
-    answer_xml         = models.TextField(null=True)
+    answer             = models.TextField(null=True)
+    requester_feedback = models.TextField()
 
     def duration(self):
         return self.submit_time - self.accept_time
 
+    FIELD_PARAM_MAPPINGS = (
+        ('assignment_id', 'AssignmentId'),
+        ('assignment_status', 'AssignmentStatus',
+            lambda f, D=assignment_status_key_to_str: D[f],
+            lambda p, D=assignment_status_str_to_key: D[p]),
+        ('worker_id', 'WorkerId'),
+        ('hit_id', 'HITId'),
+        ('auto_approval_time', 'AutoApprovalTime'),
+        ('accept_time', 'AcceptTime'),
+        ('submit_time', 'SubmitTime'),
+        ('approval_time', 'ApprovalTime'),
+        ('rejection_time', 'RejectionTime'),
+        ('deadline', 'Deadline'),
+        ('answer', 'Answer'),
+        ('requester_feedback', 'RequesterFeedback')
+    )
+
+    def approve(self, feedback=None, override_rejection=False):
+        params = {
+            'AssignmentId': self.assignment_id,
+            'OverrideRejection': override_rejection
+        }
+        if feedback is not None:
+            params['RequesterFeedback'] = feedback
+        get_mturk_client().approve_assignment(**params)
+        print('Assignment {} is approved'.format(self.assignment_id))
+
+    def reject(self, feedback=None):
+        params = {
+            'AssignmentId': self.assignment_id,
+        }
+        if feedback is not None:
+            params['RequesterFeedback'] = feedback
+        get_mturk_client().reject_assignment(**params)
+        print('Assignment {} is rejected'.format(self.assignment_id))
+
     def save(self, *args, **kwargs):
-        if self.id == 'ASSIGNMENT_ID_NOT_AVAILABLE':
-            print('AssignmentId is ASSIGNMENT_ID_NOT_AVAILABLE, not going to save this.')
+        if self.assignment_id == 'ASSIGNMENT_ID_NOT_AVAILABLE':
+            print('AssignmentId is ASSIGNMENT_ID_NOT_AVAILABLE, pass.')
             return
         super(MturkAssignment, self).save(*args, **kwargs)
 
     @classmethod
-    def create_or_update_from_response(cls, response, save=True):
+    def create_or_update_from_response(cls, response):
         try:
-            assignment = cls.objects.get(id=response['AssignmentId'])
+            assignment = cls.objects.get(assignment_id=response['AssignmentId'])
         except cls.DoesNotExist:
             assignment = cls()
 
-        attr_key_pairs = (
-            ('id', 'AssignmentId'),
-            ('worker', 'WorkerId'),
-            ('hit', 'HITId'),
-            ('assignment_status', 'AssignmentStatus'),
-            ('auto_approval_time', 'AutoApprovalTime'),
-            ('accept_time', 'AcceptTime'),
-            ('submit_time', 'SubmitTime'),
-            ('approval_time', 'ApprovalTime'),
-            ('rejection_time', 'RejectionTime'),
-            ('deadline', 'Deadline'),
-            ('answer_xml', 'Answer')
-            # RequesterFeedback is ignored
+        set_fields_from_params(
+            assignment, response, assignment.FIELD_PARAM_MAPPINGS,
+            ('assignment_id', 'worker_id', 'hit_id', 'assignment_status',
+            'auto_approval_time', 'accept_time', 'submit_time', 'approval_time',
+            'rejection_time', 'deadline', 'answer', 'requester_feedback')
         )
-        for attr, key in attr_key_pairs:
-            if not key in response:
-                continue
-            value = response[key]
-            if key == 'WorkerId':
-                value = MturkWorker.get_or_create(value)
-            elif key == 'HITId':
-                value = MturkHit.objects.get(id=value)
-            elif key == 'AssignmentStatus':
-                value = assignment.status_string_to_key[value]
-            setattr(assignment, attr, value)
-        
-        if save:
-            assignment.save()
-
+        assignment.save()
         return assignment
 
     def __str__(self):
-        return str(self.id)
+        return self.assignment_id
 
 
 class QualificationType(ModelBase):
-    # qualification type id, obtained after creation
-    id = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
-
-    # obtained after creation
-    creation_time = models.DateTimeField()
-
-    name        = models.CharField(max_length=64)
-    keywords    = models.CharField(max_length=256)
-    description = models.TextField()
-
     QUALIFICATION_TYPE_STATUS_CHOICES = (
         ('A', 'Active'),
         ('I', 'Inactive'),
     )
-    qtype_status_key_to_str = {k:v for k, v in QUALIFICATION_TYPE_STATUS_CHOICES}
-    qtype_status_str_to_key = {v:k for k, v in QUALIFICATION_TYPE_STATUS_CHOICES}
-    qualification_type_status = models.CharField(max_length=1, choices=QUALIFICATION_TYPE_STATUS_CHOICES, default='A')
+    qtype_status_key_to_str = dict((k,v) for (k,v) in QUALIFICATION_TYPE_STATUS_CHOICES)
+    qtype_status_str_to_key = dict((v,k) for (k,v) in QUALIFICATION_TYPE_STATUS_CHOICES)
 
-    test          = models.TextField()
-    test_duration = models.DurationField()
-    answer_key    = models.TextField(null=True)
-    retry_delay   = models.DurationField()
-
-    # obtained after creation
-    is_requestable = models.BooleanField()
-
-    auto_granted = models.BooleanField()
+    qtype_id           = models.CharField(max_length=MAX_ID_LENGTH, unique=True)
+    creation_time      = models.DateTimeField()
+    name               = models.CharField(max_length=64)
+    keywords           = models.CharField(max_length=256)
+    description        = models.TextField()
+    qtype_status       = models.CharField(max_length=1, choices=QUALIFICATION_TYPE_STATUS_CHOICES, default='A')
+    test               = models.TextField()
+    test_duration      = models.DurationField()
+    answer_key         = models.TextField(null=True)
+    retry_delay        = models.DurationField()
+    is_requestable     = models.BooleanField()
+    auto_granted       = models.BooleanField()
     auto_granted_value = models.IntegerField(null=True)
 
-    def create_qtype_on_mturk(self, client=None):
-        client = client or get_mturk_client()
+    FIELD_PARAM_MAPPINGS = (
+        ('qtype_id', 'QualificationTypeId'),
+        ('creation_time', 'CreationTime'),
+        ('name', 'Name'),
+        ('keywords', 'Keywords'),
+        ('description', 'Description'),
+        ('qtype_status', 'QualificationTypeStatus',
+            lambda f, D=qtype_status_key_to_str: D[f],
+            lambda p, D=qtype_status_str_to_key: D[p]),
+        ('test', 'Test'),
+        ('test_duration', 'TestDurationInSeconds',
+            lambda f: int(f.total_seconds()),
+            lambda p: timedelta(seconds=p)),
+        ('answer_key', 'AnswerKey'),
+        ('retry_delay', 'RetryDelayInSeconds',
+            lambda f: int(f.total_seconds()),
+            lambda p: timedelta(seconds=p)),
+        ('is_requestable', 'IsRequestable'),
+        ('auto_granted', 'AutoGranted'),
+        ('auto_granted_value', 'AutoGrantedValue')
+    )
 
+    def associate_to_worker(self, worker_id, value=None, send_notification=False):
         params = {
-            'Name': self.name,
-            'Keywords': self.keywords,
-            'Description': self.description,
-            'QualificationTypeStatus': self.qtype_status_key_to_str[self.qualification_type_status],
-            'RetryDelayInSeconds': int(self.retry_delay.total_seconds()),
-            'Test': self.test,
-            'TestDurationInSeconds': int(self.test_duration.total_seconds()),
-            'AutoGranted': self.auto_granted,
-        }
-        if self.answer_key is not None:
-            params['AnswerKey'] = self.answer_key
-        if self.auto_granted == True:
-            params['AutoGrantedValue'] = self.auto_granted_value
-
-        response = client.create_qualification_type(**params)['QualificationType']
-        print('QualificationType {} created on MTurk'.format(response['QualificationTypeId']))
-
-        self.id = response['QualificationTypeId']
-        self.creation_time = response['CreationTime']
-        self.is_requestable = response['IsRequestable']
-    
-    def update_qtype_on_mturk(self, client=None):
-        client = client or get_mturk_client()
-        params = {
-            'QualificationTypeId': self.id,
-            'Description': self.description,
-            'QualificationTypeStatus': self.qtype_status_key_to_str[self.qualification_type_status],
-            'Test': self.test,
-            'TestDurationInSeconds': int(self.test_duration.total_seconds()),
-            'RetryDelayInSeconds': int(self.retry_delay.total_seconds()),
-            'AutoGranted': self.auto_granted,
-        }
-        if self.answer_key is not None:
-            params['AnswerKey'] = self.answer_key
-        if self.auto_granted and self.auto_granted_value is not None:
-            params['AutoGrantedValue'] = self.auto_granted_value
-        client.update_qualification_type(**params)
-        print('QualificationType {} updated on MTurk'.format(self.id))
-
-    def associate_to_worker(self, worker_id, client=None, value=None, send_notification=False):
-        client = client or get_mturk_client()
-        params = {
-            'QualificationTypeId': self.id,
+            'QualificationTypeId': self.qtype_id,
             'WorkerId': worker_id,
             'SendNotification': send_notification
         }
         if value is not None:
             params['IntegerValue'] = value
-        client.associate_qualification_with_worker(**params)
-        worker, _ = MturkWorker.objects.get_or_create(id=worker_id)
+        get_mturk_client().associate_qualification_with_worker(**params)
+        worker, _ = MturkWorker.objects.get_or_create(worker_id=worker_id)
         print('QualificationType {} associated to worker {} with value {}. Notification{} sent'.format(
-            self.id, worker, value, "" if send_notification else " not"
+            self.qtype_id, worker, value, "" if send_notification else " not"
         ))
     
-    def disassociate_from_worker(self, worker_id, client=None, reason=None):
+    def disassociate_from_worker(self, worker_id, reason=None):
         client = client or get_mturk_client()
         params = {
-            'QualificationTypeId': self.id,
+            'QualificationTypeId': self.qtype_id,
             'WorkerId': worker_id
         }
         if reason is not None:
             params['Reason'] = reason
         client.disassociate_qualification_from_worker(**params)
-        worker, _ = MturkWorker.objects.get_or_create(id=worker_id)
-        print('QualificationType {} disassociated from worker {}'.format(self.id, worker))
+        worker, _ = MturkWorker.objects.get_or_create(worker_id=worker_id)
+        print('QualificationType {} disassociated from worker {}'.format(self.qtype_id, worker))
 
-    def save(self, client=None, *args, **kwargs):
-        if not self.id: # ID is None or empty string
-            client = client or get_mturk_client()
-            self.create_qtype_on_mturk(client)
+    def save(self, *args, **kwargs):
+        if not self.qtype_id: # ID is None or empty string
+            # create QualificationType on MTurk
+            params = get_parameters_from_fields(
+                self, FIELD_PARAM_MAPPINGS,
+                ('name', 'keywords', 'description', 'qtype_status', 'retry_delay',
+                'test', 'test_duration', 'auto_granted', 'answer_key', 'auto_granted_value'),
+                skip_none=True
+            )
+            response = get_mturk_client().create_qualification_type(**params)['QualificationType']
+            print('QualificationType {} created on MTurk'.format(response['QualificationTypeId']))
+            set_fields_from_params(
+                self, response, FIELD_PARAM_MAPPINGS,
+                ('qtype_id', 'creation_time', 'qtype_status', 'is_requestable')
+            )
         else:
-            client = client or get_mturk_client()
-            self.update_qtype_on_mturk(client)
+            # update QualificationType on Mturk
+            params = get_parameters_from_fields(
+                self, FIELD_PARAM_MAPPINGS,
+                ('qtype_id', 'description', 'qtype_status', 'test', 'answer_key',
+                 'test_duration', 'retry_delay', 'auto_granted', 'auto_granted_value'),
+                skip_none=True
+            )
+            get_mturk_client().update_qualification_type(**params)
+            print('QualificationType {} updated on MTurk'.format(self.id))
+
         super(QualificationType, self).save(*args, **kwargs)
 
-    def delete(self, client=None, *args, **kwargs):
-        client = client or get_mturk_client()
-        client.delete_qualification_type(
-            QualificationTypeId=self.id
+    def delete(self, *args, **kwargs):
+        get_mturk_client().delete_qualification_type(
+            QualificationTypeId=self.qtype_id
         )
-        print('QualificationType {} deleted on MTurk'.format(self.id))
+        print('QualificationType {} deleted on MTurk'.format(self.qtype_id))
         super(QualificationType, self).delete(*args, **kwargs)
 
-    def sync(self, client=None, sync_requests=True):
+    def sync(self, sync_requests=True):
         """ Sync status and its requests """
-        client = client or get_mturk_client()
-
-        # sync QualificationType statuses
-        response = client.get_qualification_type(
-            QualificationTypeId=self.id
+        # sync QualificationType status with MTurk
+        response = get_mturk_client().get_qualification_type(
+            QualificationTypeId=self.qtype_id
         )
-        self.qualification_type_status = qtype_status_str_to_key[response['QualificationTypeStatus']]
-        self.is_requestable = response['IsRequestable']
+        set_fields_from_params(
+            self, response, FIELD_PARAM_MAPPINGS,
+            ('qtype_status', 'is_requestable'))
         self.save()
 
         if sync_requests == True:
@@ -510,35 +512,35 @@ class QualificationType(ModelBase):
             num_results = None
             while num_results is None or num_results == max_results:
                 params = {
-                    'QualificationTypeId': self.id,
+                    'QualificationTypeId': self.qtype_id,
                     'MaxResults': max_results
                 }
                 if next_token is not None:
                     params['NextToken'] = next_token
-                response = client.list_qualification_requests(**params)                
-
+                response = get_mturk_client().list_qualification_requests(**params)
                 num_results = response['NumResults']
                 next_token = response['NextToken']
                 
                 for request in response['QualificationRequests']:
-                    worker, _ = MturkWorker.get_or_create(id=request['WorkerId'])
-                    assert(self.id == request['QualificationTypeId'])
+                    MturkWorker.get_or_create(worker_id=request['WorkerId'])
+                    assert(self.qtype_id == request['QualificationTypeId'])
                     QualificationRequest.get_or_create(
-                        id                 = request['QualificationRequestId'],
-                        qualification_type = self,
-                        worker             = worker,
-                        test               = request['Test'],
-                        answer             = request['Answer'],
-                        submit_time        = request['SubmitTime']
+                        qrequest_id = request['QualificationRequestId'],
+                        qtype_id    = self.qtype_id,
+                        worker_id   = request['WorkerId'],
+                        test        = request['Test'],
+                        answer      = request['Answer'],
+                        submit_time = request['SubmitTime']
                     )
 
     def __str__(self):
-        return str(self.id)
+        return str(self.qtype_id)
 
 
 class QualificationRequirement(ModelBase):
     """Qualification type and other settings that are passed as parameters when creating HITs."""
     hit_type = models.ForeignKey(MturkHitType, related_name='qualification_requirements')
+    hit_type_id = models.CharField(max_length=MAX_ID_LENGTH)
 
     qualification_type = models.ForeignKey(QualificationType, on_delete=models.CASCADE)
 
@@ -584,9 +586,7 @@ class QualificationRequirement(ModelBase):
 class QualificationRequest(ModelBase):
     """QualificationRequest should be created by calling QualificationType.sync """
 
-    # obtained from MTurk after creation
-    id = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
-
+    qrequest_id = models.CharField(max_length=MAX_ID_LENGTH, unique=True)
     qualification_type = models.ForeignKey(QualificationType, on_delete=models.CASCADE)
 
     # obtained from mturk
@@ -595,7 +595,7 @@ class QualificationRequest(ModelBase):
     answer      = models.TextField()
     submit_time = models.DateTimeField()
 
-    def accept(self, client=None, value=None):
+    def accept(self, value=None):
         """ Accept request with an optional integer value attached to it. """
         params = {
             'QualificationRequestId': self.id
@@ -607,7 +607,7 @@ class QualificationRequest(ModelBase):
             self.id, self.worker
         ))
 
-    def reject(self, client=None, reason=None):
+    def reject(self, reason=None):
         """ Reject request. """
         reason = reason or 'Sorry, we cannot accept your request at this moment.'
         params = {

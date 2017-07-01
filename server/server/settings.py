@@ -29,8 +29,10 @@ DEBUG = True
 MTURK_SANDBOX = DEBUG
 
 # Use a separate database in development
-DATABASE_NAME = 'cocotext_v2_sandbox' if MTURK_SANDBOX == True else \
-                'cocotext_v2_amt'
+# DATABASE_NAME = 'cocotext_v2_sandbox' if MTURK_SANDBOX == True else \
+#                 'cocotext_v2_amt'
+
+DATABASE_NAME = 'cocotext-v2-dev'
 
 ALLOWED_HOSTS = [
     # 'amt-api.bgshi.me'

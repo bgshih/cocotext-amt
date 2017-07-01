@@ -78,7 +78,6 @@ class Project(ModelBase):
 
 class Worker(ModelBase):
     """ Extends MturkWorker """
-
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
