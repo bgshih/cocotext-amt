@@ -15,6 +15,5 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **options):
-        client = get_mturk_client()
         project = Project.objects.get(name='PolygonVerification')
-        project.sync(client=client)
+        project.sync()

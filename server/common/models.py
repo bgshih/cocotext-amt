@@ -6,7 +6,8 @@ from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import now
 
-from common.utils import get_mturk_client, parse_answer_xml, validate_list_of_integer
+from common.utils import get_mturk_client, parse_answer_xml, \
+    get_params_from_fields, set_fields_from_params
 
 MAX_ID_LENGTH = 128
 
@@ -24,56 +25,62 @@ class ModelBase(models.Model):
 ################################################################################
 
 class CocoTextImage(ModelBase):
-    image_id = models.CharField(max_length=MAX_ID_LENGTH, unique=True) # Use MSCOCO image ID
-    filename = models.CharField(max_length=256)
-    width = models.PositiveIntegerField()
-    height = models.PositiveIntegerField()
-
     SUBSET_CHOICES = (
         ('TRN', 'Training'),
         ('VAL', 'Validation'),
         ('TST', 'Test')
     )
-    set = models.CharField(max_length=3, choices=SUBSET_CHOICES)
+
+    id       = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True) # Use MSCOCO image ID
+    filename = models.CharField(max_length=256)
+    width    = models.PositiveIntegerField()
+    height   = models.PositiveIntegerField()
+    set      = models.CharField(max_length=3, choices=SUBSET_CHOICES)
+
+    def num_instances(self):
+        return self.instances.count()
 
     def __str__(self):
         return str(self.id)
 
 
 class CocoTextInstance(ModelBase):
-    # If imported from v1, use original ID
-    instance_id = models.CharField(max_length=MAX_ID_LENGTH, unique=True)
-    image = models.ForeignKey(CocoTextImage, on_delete=models.CASCADE)
-    # Polygon format: [{x: number, y: number}, ...]
-    polygon = JSONField()
-    text = models.CharField(max_length=256, null=True)
-
     LEGIBILITY_CHOICES = (
         ('L', 'Legible'),
         ('I', 'Illegible')
     )
-    legibility = models.CharField(max_length=1, choices=LEGIBILITY_CHOICES)
 
     TEXT_CLASS_CHOICES = (
         ('M', 'MachinePrinted'),
         ('H', 'Handwritten'),
         ('O', 'Others')
     )
-    text_class = models.CharField(max_length=1, choices=TEXT_CLASS_CHOICES, null=True)
 
-    language = models.CharField(max_length=128, null=True)
-    from_v1 = models.BooleanField(default=False) # Instance is inherited from V1
-
-    # verification status
     VERIFICATION_STATUS_CHOICES = (
         ('U', 'Unverified'),
         ('C', 'Correct'),
         ('W', 'Wrong'),
     )
-    polygon_verification = models.CharField(max_length=1, choices=VERIFICATION_STATUS_CHOICES, default='U')
-    text_verification = models.CharField(max_length=1, choices=VERIFICATION_STATUS_CHOICES, default='U')
+
+    # If imported from v1, use original ID
+    id                      = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
+    image                   = models.ForeignKey(CocoTextImage,
+                                                related_name='instances',
+                                                on_delete=models.CASCADE)
+    # Polygon format : [{x: number, y: number}, ...]
+    polygon                 = JSONField()
+    text                    = models.CharField(max_length=256, null=True)
+    language                = models.CharField(max_length=128, null=True)
+    legibility              = models.CharField(max_length=1, choices=LEGIBILITY_CHOICES)
+    text_class              = models.CharField(max_length=1, choices=TEXT_CLASS_CHOICES, null=True)
+    # Instance is inherited from V1
+    from_v1                 = models.BooleanField(default=False)
+    
+    # verifications
+    polygon_verification    = models.CharField(max_length=1, choices=VERIFICATION_STATUS_CHOICES, default='U')
+    text_verification       = models.CharField(max_length=1, choices=VERIFICATION_STATUS_CHOICES, default='U')
     legibility_verification = models.CharField(max_length=1, choices=VERIFICATION_STATUS_CHOICES, default='U')
-    language_verification = models.CharField(max_length=1, choices=VERIFICATION_STATUS_CHOICES, default='U')
+    language_verification   = models.CharField(max_length=1, choices=VERIFICATION_STATUS_CHOICES, default='U')
 
     def __str__(self):
         return str(self.id)
@@ -84,7 +91,7 @@ class CocoTextInstance(ModelBase):
 ################################################################################
 
 class MturkHitType(ModelBase):
-    hit_type_id         = models.CharField(max_length=MAX_ID_LENGTH, unique=True)
+    id                  = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
     auto_approval_delay = models.DurationField(default=timedelta(days=14))
     assignment_duration = models.DurationField(default=timedelta(hours=1))
     reward              = models.DecimalField(decimal_places=2, max_digits=4)
@@ -94,7 +101,7 @@ class MturkHitType(ModelBase):
     qrequirements       = JSONField(null=True)
 
     FIELD_PARAM_MAPPINGS = (
-        ('hit_type_id', 'HITTypeId'),
+        ('id', 'HITTypeId'),
         ('auto_approval_delay', 'AutoApprovalDelayInSeconds',
             lambda f: int(f.total_seconds()),
             lambda p: timedelta(seconds=p)),
@@ -108,35 +115,28 @@ class MturkHitType(ModelBase):
         ('keywords', 'Keywords'),
         ('description', 'Description'),
         ('qrequirements', 'QualificationRequirements')
-        # # FK related names
-        # ('qualification_requirements', 'QualificationRequirements',
-        #     lambda f: [r.to_params() for r in f],
-        #     None)
     )
 
     def save(self, *args, **kwargs):
-        if not self.id:
-            params = get_parameters_from_fields(self, self.FIELD_PARAM_MAPPINGS,
+        if not self.id: # None or empty string
+            params = get_params_from_fields(self, self.FIELD_PARAM_MAPPINGS,
                 ('auto_approval_delay', 'assignment_duration', 'reward', 'title',
-                 'keywords', 'description', 'qualification_requirements')
+                 'keywords', 'description', 'qrequirements')
             )
             response = get_mturk_client().create_hit_type(**params)
             print('HITType {} created on MTurk'.format(response['HITTypeId']))
-            self.hit_type_id = response['HITTypeId']
-        super(HitType, self).save(*args, **kwargs)
-    
+            self.id = response['HITTypeId']
+        super(MturkHitType, self).save(*args, **kwargs)
+
     def __str__(self):
         return str(self.id)
-
-    class Meta:
-        abstract = True
 
 
 class MturkWorker(ModelBase):
     # obtained from AMT
-    worker_id = models.CharField(
-        max_length=MAX_ID_LENGTH
-        unique=True
+    id = models.CharField(
+        max_length=MAX_ID_LENGTH,
+        primary_key=True
     )
 
     # should be set by calling block() and unblock()
@@ -146,7 +146,7 @@ class MturkWorker(ModelBase):
     unblock_reason = models.TextField()
 
     FIELD_PARAM_MAPPINGS = (
-        ('worker_id', 'WorkerId'),
+        ('id', 'WorkerId'),
         ('block_reason', 'Reason'),
         ('unblock_reason', 'Reason')
     )
@@ -154,20 +154,20 @@ class MturkWorker(ModelBase):
     def block(self):
         raise NotImplementedError('Banning workers are not encouraged.')
 
-        params = get_parameters_from_fields(
+        params = get_params_from_fields(
             self, self.FIELD_PARAM_MAPPINGS,
-            ('worker_id', 'block_reason'),
+            ('id', 'block_reason'),
             skipe_none=True
         )
         get_mturk_client().create_worker_block(**params)
-        print('MTurk Worker {} has been blocked from all HITs'.format(self.worker_id))
+        print('MTurk Worker {} has been blocked from all HITs'.format(self.id))
         self.blocked = True
         self.save()
 
     def unblock(self):
-        params = get_parameters_from_fields(
+        params = get_params_from_fields(
             self, self.FIELD_PARAM_MAPPINGS,
-            ('worker_id', 'unblock_reason'),
+            ('id', 'unblock_reason'),
             skipe_none=True
         )
         get_mturk_client().delete_worker_block(**params)
@@ -176,10 +176,7 @@ class MturkWorker(ModelBase):
         self.save()
 
     def __str__(self):
-        return self.worker_id
-
-    class Meta:
-        abstract = True
+        return str(self.id)
 
 
 class MturkHit(ModelBase):
@@ -204,8 +201,8 @@ class MturkHit(ModelBase):
     review_status_key_to_str = dict((k, v) for (k, v) in REVIEW_STATUS_CHOICES)
     review_status_str_to_key = dict((v, k) for (k, v) in REVIEW_STATUS_CHOICES)
 
-    hit_id                    = models.CharField(max_length=MAX_ID_LENGTH, unique=True)
-    hit_type_id               = models.CharField(max_length=MAX_ID_LENGTH)
+    id                        = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
+    hit_type                  = models.ForeignKey(MturkHitType)
     hit_layout_id             = models.CharField(max_length=MAX_ID_LENGTH, null=True)
     hit_layout_parameters     = JSONField(null=True)
     hit_group_id              = models.CharField(max_length=MAX_ID_LENGTH)
@@ -227,8 +224,10 @@ class MturkHit(ModelBase):
     hit_review_policy         = JSONField(null=True)
 
     FIELD_PARAM_MAPPINGS = (
-        ('hit_id', 'HITId'),
-        ('hit_type_id', 'HITTypeId'),
+        ('id', 'HITId'),
+        ('hit_type', 'HITTypeId',
+            lambda f: f.id,
+            lambda p: MturkHitType.objects.get(id=p)),
         ('hit_layout_id', 'HITLayoutId'),
         ('hit_layout_parameters', 'HITLayoutParameters'),
         ('hit_group_id', 'HITGroupId'),
@@ -246,7 +245,7 @@ class MturkHit(ModelBase):
         ('unique_request_token', 'UniqueRequestToken'),
         ('hit_review_status', 'HITReviewStatus',
             lambda f, D=review_status_str_to_key: D[f],
-            lambda p: D=review_status_key_to_str: D[p]),
+            lambda p, D=review_status_key_to_str: D[p]),
         ('num_assignments_pending', 'NumberOfAssignmentsPending'),
         ('num_assignments_available', 'NumberOfAssignmentsAvailable'),
         ('num_assignments_completed', 'NumberOfAssignmentsCompleted'),
@@ -256,7 +255,7 @@ class MturkHit(ModelBase):
 
     def sync_assignments(self):
         response = get_mturk_client().list_assignments_for_hit(
-            HITId=self.hit_id,
+            HITId=self.id,
             MaxResults=100, # assignments should never exceed 100
             AssignmentStatuses=['Submitted', 'Approved', 'Rejected']
         )['Assignments']
@@ -265,7 +264,7 @@ class MturkHit(ModelBase):
 
     def sync(self, sync_assignments=True):
         """Sync status with AMT, also sync its assignments """
-        response = get_mturk_client().get_hit(HITId=self.hit_id)['HIT']
+        response = get_mturk_client().get_hit(HITId=self.id)['HIT']
         set_fields_from_params(
             self, response, self.FIELD_PARAM_MAPPINGS,
             ('hit_status', 'hit_review_status', 'num_assignments_pending',
@@ -279,9 +278,9 @@ class MturkHit(ModelBase):
     def save(self, *args, **kwargs):
         if not self.id: # ID is None or empty string
             # create a new HIT
-            params = get_parameters_from_fields(
+            params = get_params_from_fields(
                 self, self.FIELD_PARAM_MAPPINGS,
-                ('hit_type_id', 'max_assignments', 'lifetime', 'question',
+                ('hit_type', 'max_assignments', 'lifetime', 'question',
                  'requester_annotation', 'unique_request_token', 'assignment_review_policy',
                  'hit_review_policy', 'hit_layout_id', 'hit_layout_parameters'),
                 skip_none=True
@@ -292,7 +291,7 @@ class MturkHit(ModelBase):
 
             set_fields_from_params(
                 self, response, self.FIELD_PARAM_MAPPINGS,
-                ('hit_id', 'hit_group_id', 'creation_time', 'expiration', 'hit_status',
+                ('id', 'hit_group_id', 'creation_time', 'expiration', 'hit_status',
                  'hit_review_status', 'num_assignments_pending', 'num_assignments_available',
                  'num_assignments_completed')
             )
@@ -300,7 +299,7 @@ class MturkHit(ModelBase):
         super(MturkHit, self).save(*args, **kwargs)
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
 
 class MturkAssignment(ModelBase):
@@ -312,60 +311,64 @@ class MturkAssignment(ModelBase):
     assignment_status_key_to_str = dict((k,v) for (k,v) in ASSIGNMENT_STATUS_CHOICES)
     assignment_status_str_to_key = dict((v,k) for (k,v) in ASSIGNMENT_STATUS_CHOICES)
     
-    assignment_id      = models.CharField(max_length=MAX_ID_LENGTH, unique=True)
+    id                 = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
     assignment_status  = models.CharField(max_length=1, choices=ASSIGNMENT_STATUS_CHOICES)
-    worker_id          = models.CharField(max_length=MAX_ID_LENGTH)
-    hit_id             = models.CharField(max_length=MAX_ID_LENGTH)
+    worker             = models.ForeignKey(MturkWorker)
+    hit                = models.ForeignKey(MturkHit)
     auto_approval_time = models.DateTimeField(null=True)
     accept_time        = models.DateTimeField(null=True)
     submit_time        = models.DateTimeField(null=True)
     approval_time      = models.DateTimeField(null=True)
     rejection_time     = models.DateTimeField(null=True)
     deadline           = models.DateTimeField(null=True)
-    answer             = models.TextField(null=True)
-    requester_feedback = models.TextField()
+    answer_xml         = models.TextField(null=True)
+    requester_feedback = models.TextField(null=True)
 
     def duration(self):
         return self.submit_time - self.accept_time
 
     FIELD_PARAM_MAPPINGS = (
-        ('assignment_id', 'AssignmentId'),
+        ('id', 'AssignmentId'),
         ('assignment_status', 'AssignmentStatus',
             lambda f, D=assignment_status_key_to_str: D[f],
             lambda p, D=assignment_status_str_to_key: D[p]),
-        ('worker_id', 'WorkerId'),
-        ('hit_id', 'HITId'),
+        ('worker', 'WorkerId',
+            lambda f: f.id,
+            lambda p: MturkWorker.objects.get(id=p)),
+        ('hit', 'HITId',
+            lambda f: f.id,
+            lambda p: MturkHit.objects.get(id=p)),
         ('auto_approval_time', 'AutoApprovalTime'),
         ('accept_time', 'AcceptTime'),
         ('submit_time', 'SubmitTime'),
         ('approval_time', 'ApprovalTime'),
         ('rejection_time', 'RejectionTime'),
         ('deadline', 'Deadline'),
-        ('answer', 'Answer'),
+        ('answer_xml', 'Answer'),
         ('requester_feedback', 'RequesterFeedback')
     )
 
     def approve(self, feedback=None, override_rejection=False):
         params = {
-            'AssignmentId': self.assignment_id,
+            'AssignmentId': self.id,
             'OverrideRejection': override_rejection
         }
         if feedback is not None:
             params['RequesterFeedback'] = feedback
         get_mturk_client().approve_assignment(**params)
-        print('Assignment {} is approved'.format(self.assignment_id))
+        print('Assignment {} is approved'.format(self.id))
 
     def reject(self, feedback=None):
         params = {
-            'AssignmentId': self.assignment_id,
+            'AssignmentId': self.id,
         }
         if feedback is not None:
             params['RequesterFeedback'] = feedback
         get_mturk_client().reject_assignment(**params)
-        print('Assignment {} is rejected'.format(self.assignment_id))
+        print('Assignment {} is rejected'.format(self.id))
 
     def save(self, *args, **kwargs):
-        if self.assignment_id == 'ASSIGNMENT_ID_NOT_AVAILABLE':
+        if self.id == 'ASSIGNMENT_ID_NOT_AVAILABLE':
             print('AssignmentId is ASSIGNMENT_ID_NOT_AVAILABLE, pass.')
             return
         super(MturkAssignment, self).save(*args, **kwargs)
@@ -373,21 +376,24 @@ class MturkAssignment(ModelBase):
     @classmethod
     def create_or_update_from_response(cls, response):
         try:
-            assignment = cls.objects.get(assignment_id=response['AssignmentId'])
+            assignment = cls.objects.get(id=response['AssignmentId'])
         except cls.DoesNotExist:
             assignment = cls()
+        
+        # create worker object if new MTurk worker comes in
+        MturkWorker.get_or_create(id=response['WorkerId'])
 
         set_fields_from_params(
             assignment, response, assignment.FIELD_PARAM_MAPPINGS,
-            ('assignment_id', 'worker_id', 'hit_id', 'assignment_status',
+            ('id', 'worker', 'hit', 'assignment_status',
             'auto_approval_time', 'accept_time', 'submit_time', 'approval_time',
-            'rejection_time', 'deadline', 'answer', 'requester_feedback')
+            'rejection_time', 'deadline', 'answer_xml', 'requester_feedback')
         )
         assignment.save()
         return assignment
 
     def __str__(self):
-        return self.assignment_id
+        return str(self.id)
 
 
 class QualificationType(ModelBase):
@@ -398,7 +404,7 @@ class QualificationType(ModelBase):
     qtype_status_key_to_str = dict((k,v) for (k,v) in QUALIFICATION_TYPE_STATUS_CHOICES)
     qtype_status_str_to_key = dict((v,k) for (k,v) in QUALIFICATION_TYPE_STATUS_CHOICES)
 
-    qtype_id           = models.CharField(max_length=MAX_ID_LENGTH, unique=True)
+    id                 = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
     creation_time      = models.DateTimeField()
     name               = models.CharField(max_length=64)
     keywords           = models.CharField(max_length=256)
@@ -413,7 +419,7 @@ class QualificationType(ModelBase):
     auto_granted_value = models.IntegerField(null=True)
 
     FIELD_PARAM_MAPPINGS = (
-        ('qtype_id', 'QualificationTypeId'),
+        ('id', 'QualificationTypeId'),
         ('creation_time', 'CreationTime'),
         ('name', 'Name'),
         ('keywords', 'Keywords'),
@@ -434,52 +440,50 @@ class QualificationType(ModelBase):
         ('auto_granted_value', 'AutoGrantedValue')
     )
 
-    def associate_to_worker(self, worker_id, value=None, send_notification=False):
+    def associate_to_worker(self, worker, value=None, send_notification=False):
         params = {
-            'QualificationTypeId': self.qtype_id,
-            'WorkerId': worker_id,
+            'QualificationTypeId': self.id,
+            'WorkerId': worker.id,
             'SendNotification': send_notification
         }
         if value is not None:
             params['IntegerValue'] = value
         get_mturk_client().associate_qualification_with_worker(**params)
-        worker, _ = MturkWorker.objects.get_or_create(worker_id=worker_id)
         print('QualificationType {} associated to worker {} with value {}. Notification{} sent'.format(
-            self.qtype_id, worker, value, "" if send_notification else " not"
+            self.id, worker, value, "" if send_notification else " not"
         ))
     
-    def disassociate_from_worker(self, worker_id, reason=None):
+    def disassociate_from_worker(self, worker, reason=None):
         client = client or get_mturk_client()
         params = {
-            'QualificationTypeId': self.qtype_id,
-            'WorkerId': worker_id
+            'QualificationTypeId': self.id,
+            'WorkerId': worker.id
         }
         if reason is not None:
             params['Reason'] = reason
         client.disassociate_qualification_from_worker(**params)
-        worker, _ = MturkWorker.objects.get_or_create(worker_id=worker_id)
-        print('QualificationType {} disassociated from worker {}'.format(self.qtype_id, worker))
+        print('QualificationType {} disassociated from worker {}'.format(self.id, worker))
 
     def save(self, *args, **kwargs):
-        if not self.qtype_id: # ID is None or empty string
+        if not self.id: # ID is None or empty string
             # create QualificationType on MTurk
-            params = get_parameters_from_fields(
-                self, FIELD_PARAM_MAPPINGS,
+            params = get_params_from_fields(
+                self, self.FIELD_PARAM_MAPPINGS,
                 ('name', 'keywords', 'description', 'qtype_status', 'retry_delay',
-                'test', 'test_duration', 'auto_granted', 'answer_key', 'auto_granted_value'),
+                 'test', 'test_duration', 'auto_granted', 'answer_key', 'auto_granted_value'),
                 skip_none=True
             )
             response = get_mturk_client().create_qualification_type(**params)['QualificationType']
             print('QualificationType {} created on MTurk'.format(response['QualificationTypeId']))
             set_fields_from_params(
-                self, response, FIELD_PARAM_MAPPINGS,
-                ('qtype_id', 'creation_time', 'qtype_status', 'is_requestable')
+                self, response, self.FIELD_PARAM_MAPPINGS,
+                ('id', 'creation_time', 'qtype_status', 'is_requestable')
             )
         else:
             # update QualificationType on Mturk
-            params = get_parameters_from_fields(
-                self, FIELD_PARAM_MAPPINGS,
-                ('qtype_id', 'description', 'qtype_status', 'test', 'answer_key',
+            params = get_params_from_fields(
+                self, self.FIELD_PARAM_MAPPINGS,
+                ('id', 'description', 'qtype_status', 'test', 'answer_key',
                  'test_duration', 'retry_delay', 'auto_granted', 'auto_granted_value'),
                 skip_none=True
             )
@@ -490,16 +494,16 @@ class QualificationType(ModelBase):
 
     def delete(self, *args, **kwargs):
         get_mturk_client().delete_qualification_type(
-            QualificationTypeId=self.qtype_id
+            QualificationTypeId=self.id
         )
-        print('QualificationType {} deleted on MTurk'.format(self.qtype_id))
+        print('QualificationType {} deleted on MTurk'.format(self.id))
         super(QualificationType, self).delete(*args, **kwargs)
 
     def sync(self, sync_requests=True):
         """ Sync status and its requests """
         # sync QualificationType status with MTurk
         response = get_mturk_client().get_qualification_type(
-            QualificationTypeId=self.qtype_id
+            QualificationTypeId=self.id
         )
         set_fields_from_params(
             self, response, FIELD_PARAM_MAPPINGS,
@@ -512,7 +516,7 @@ class QualificationType(ModelBase):
             num_results = None
             while num_results is None or num_results == max_results:
                 params = {
-                    'QualificationTypeId': self.qtype_id,
+                    'QualificationTypeId': self.id,
                     'MaxResults': max_results
                 }
                 if next_token is not None:
@@ -522,74 +526,26 @@ class QualificationType(ModelBase):
                 next_token = response['NextToken']
                 
                 for request in response['QualificationRequests']:
-                    MturkWorker.get_or_create(worker_id=request['WorkerId'])
-                    assert(self.qtype_id == request['QualificationTypeId'])
+                    assert(self.id == request['QualificationTypeId'])
+                    worker, _ = MturkWorker.get_or_create(id=request['WorkerId'])
                     QualificationRequest.get_or_create(
-                        qrequest_id = request['QualificationRequestId'],
-                        qtype_id    = self.qtype_id,
-                        worker_id   = request['WorkerId'],
+                        id          = request['QualificationRequestId'],
+                        qtype       = self,
+                        worker      = worker,
                         test        = request['Test'],
                         answer      = request['Answer'],
                         submit_time = request['SubmitTime']
                     )
 
     def __str__(self):
-        return str(self.qtype_id)
-
-
-class QualificationRequirement(ModelBase):
-    """Qualification type and other settings that are passed as parameters when creating HITs."""
-    hit_type = models.ForeignKey(MturkHitType, related_name='qualification_requirements')
-    hit_type_id = models.CharField(max_length=MAX_ID_LENGTH)
-
-    qualification_type = models.ForeignKey(QualificationType, on_delete=models.CASCADE)
-
-    COMPARATOR_CHOICES = (
-        ('LT', 'LessThan'),
-        ('LE', 'LessThanOrEqualTo'),
-        ('GT', 'GreaterThan'),
-        ('GE', 'GreaterThanOrEqualTo'),
-        ('EQ', 'EqualTo'),
-        ('NE', 'NotEqualTo'),
-        ('EX', 'Exists'),
-        ('NX', 'DoesNotExist'),
-        ('IN', 'In'),
-        ('NI', 'NotIn')
-    )
-    comparator_key_to_str = {k:v for k, v in COMPARATOR_CHOICES}
-    comparator = models.CharField(
-        max_length=2,
-        choices=COMPARATOR_CHOICES,
-        null=True
-    )
-
-    # list of integers
-    integer_values = JSONField()
-
-    # list of locale values in dict {'Country': ..., 'Subdivision': ...}
-    locale_values = JSONField()
-
-    required_for_preview = models.BooleanField(default=False)
-
-    def to_params(self):
-        """Returns a dict of parameters for creating HIT"""
-        requirement_params = {
-            'QualificationTypeId': self.qualification_type.id,
-            'Comparator': self.comparator_key_to_str[self.comparator],
-            'IntegerValues': self.integer_values,
-            'LocaleValues': self.locale_values,
-            'RequiredToPreview': self.required_for_preview
-        }
-        return requirement_params
+        return str(self.id)
 
 
 class QualificationRequest(ModelBase):
     """QualificationRequest should be created by calling QualificationType.sync """
 
-    qrequest_id = models.CharField(max_length=MAX_ID_LENGTH, unique=True)
-    qualification_type = models.ForeignKey(QualificationType, on_delete=models.CASCADE)
-
-    # obtained from mturk
+    id          = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
+    qtype       = models.ForeignKey(QualificationType)
     worker      = models.ForeignKey(MturkWorker)
     test        = models.TextField()
     answer      = models.TextField()
@@ -620,4 +576,4 @@ class QualificationRequest(ModelBase):
         ))
 
     def __str__(self):
-        return self.id
+        return str(self.id)

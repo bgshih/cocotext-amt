@@ -16,9 +16,8 @@ class Command(BaseCommand):
     
     def sync_all_hits(self):
         print('Syncing all HITs')
-        client = get_mturk_client()
         for hit in tqdm(MturkHit.objects.all()):
-            hit.sync(sync_assignments=True, client=client)
+            hit.sync(sync_assignments=True)
 
     def handle(self, *args, **options):
         self.sync_all_hits()

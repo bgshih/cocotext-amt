@@ -3,14 +3,16 @@ from django.contrib import admin
 from common.models import *
 
 
-admin.site.register(HitSettings)
+class MturkHitTypeAdmin(admin.ModelAdmin):
+    readonly_fields = ('id', 'auto_approval_delay', 'assignment_duration', 'reward',
+                       'title', 'keywords', 'description', 'qrequirements')
+admin.site.register(MturkHitType, MturkHitTypeAdmin)
 
 
 class CocoTextImageAdmin(admin.ModelAdmin):
-    readonly_fields = [f.name for f in CocoTextImage._meta.fields]
-    list_display = [f.name for f in CocoTextImage._meta.fields if not \
-        f.name in ('added', 'updated')
-    ]
+    readonly_fields = ('id', 'filename', 'width', 'height', 'set', 'num_instances')
+    list_display = readonly_fields
+    list_filter = ('set',)
 admin.site.register(CocoTextImage, CocoTextImageAdmin)
 
 
@@ -26,7 +28,7 @@ class MturkHitAdmin(admin.ModelAdmin):
     readonly_fields = [f.name for f in MturkHit._meta.fields]
     list_display = [
         f.name for f in MturkHit._meta.fields if not \
-            f.name in ('added', 'updated', 'hit_type_id', 'hit_group_id')
+            f.name in ('added', 'updated', 'hit_group_id')
     ]
 admin.site.register(MturkHit, MturkHitAdmin)
 

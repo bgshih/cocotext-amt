@@ -96,7 +96,7 @@ def set_fields_from_params(obj, params, mappings, field_names):
             raise ValueError('Mappings must be 2- or 4-tuples.')
 
 
-def get_parameters_from_fields(obj, mappings, field_names, skip_none=True):
+def get_params_from_fields(obj, mappings, field_names, skip_none=True):
     """Get a dict of parameters used in the request to MTurk
         Args
             obj: The object to set fields

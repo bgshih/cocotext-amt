@@ -32,7 +32,7 @@ MTURK_SANDBOX = DEBUG
 # DATABASE_NAME = 'cocotext_v2_sandbox' if MTURK_SANDBOX == True else \
 #                 'cocotext_v2_amt'
 
-DATABASE_NAME = 'cocotext-v2-dev'
+DATABASE_NAME = 'cocotext_v2_dev'
 
 ALLOWED_HOSTS = [
     # 'amt-api.bgshi.me'

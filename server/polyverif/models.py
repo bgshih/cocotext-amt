@@ -21,15 +21,7 @@ VERIFICATION_CHOICES = (
 class Project(ModelBase):
     """ An object that keeps track of the tasks and contents """
     
-    # Project Settings
-    # name of the project
     name = models.CharField(max_length=128)
-
-    # HIT type
-    hit_type = models.ForeignKey(
-        MturkHitType,
-        on_delete=models.PROTECT
-    )
 
     # total number of contents in this project
     def num_contents(self):
@@ -37,6 +29,8 @@ class Project(ModelBase):
 
     # portion of completed contents
     def content_progress(self):
+        if self.contents.count() == 0:
+            return None
         portion = self.contents.filter(status='C').count() / self.contents.count()
         portion_str = '%.2f%%' % (portion * 100)
         return portion_str
@@ -58,13 +52,13 @@ class Project(ModelBase):
         return self.tasks.filter(completed=True).count()
 
     # sync with MTurk server to retrieve submissions, then update workers, responses
-    def sync(self, client=None, skip_completed_tasks=True):
+    def sync(self, skip_completed_tasks=True):
         tasks = self.tasks.filter(completed=False) if skip_completed_tasks == True else \
                 self.tasks.all()
         print('[1/2] Synching tasks, submissions, responses, and workers')
         print('Synching {} tasks'.format(tasks.count()))
         for task in tqdm(tasks):
-            task.sync(client=client)
+            task.sync()
 
         print('[2/2] Synching contents')
         pending_contents = self.contents.filter(status='P')
@@ -76,22 +70,14 @@ class Project(ModelBase):
         return self.name
 
 
-class Worker(ModelBase):
-    """ Extends MturkWorker """
-    project = models.ForeignKey(
-        Project,
-        on_delete=models.CASCADE,
-        related_name='project_workers'
-    )
-
-    mturk_worker = models.ForeignKey(
+class ProjectWorker(ModelBase):
+    """Extends MturkWorker."""
+    mturk_worker = models.OneToOneField(
         MturkWorker,
-        on_delete=models.CASCADE,
-        related_name='project_workers'
+        related_name='polyverif_worker'
     )
 
-    def blocked(self):
-        return self.mturk_worker.blocked
+    project = models.ForeignKey(Project)
 
     def num_responses(self):
         return self.responses.count()
@@ -126,15 +112,13 @@ class Worker(ModelBase):
         accuracy = None if num_responded == 0 else num_correct / num_responded
         return accuracy
 
-    def __str__(self):
-        return str(self.id)
-
-    class Meta:
-        unique_together = ('project', 'mturk_worker')
-
 
 class Task(ModelBase):
     """ Extends MturkHIT """
+    hit = models.OneToOneField(
+        MturkHit,
+        related_name='polyverif_task'
+    )
 
     project = models.ForeignKey(
         Project,
@@ -142,115 +126,98 @@ class Task(ModelBase):
         related_name='tasks'
     )
 
-    hit_type = models.ForeignKey(
-        MturkHitType
-    )
-    hit = models.OneToOneField(MturkHit, null=True, related_name='task')
-
-    # mirrors to hit.max_assignments
-    num_submissions_required = models.PositiveSmallIntegerField()
-
-    # mirrors to hit.lifetime
-    lifetime = models.DurationField(default=timedelta(days=7))
-
-    # mirrors to hit.question
-    question = models.TextField()
-
     # task is completed, set automatically
     completed = models.BooleanField(default=False)
+    def _get_completed(self):
+        return self.num_submissions() >= self.hit.max_assignments
+
+    def num_submissions_required(self):
+        return self.hit.max_assignments
 
     def num_contents(self):
         return self.contents.count()
 
     def num_submissions(self):
         return self.submissions.count()
-    
-    # sync with MTurk to update HITs, assignments, submissions, and responses
-    def sync(self, client=None):
-        # sync HIT and its assignments
-        self.hit.sync(client=client, sync_assignments=True)
 
-        # sync with HIT's assignments
+    def sync_submissions(self, sync_responses=True):
         for a in self.hit.assignments.all():
             if not hasattr(a, 'submission') or a.submission is None:
-                # create worker
-                worker, _ = Worker.objects.get_or_create(project=self.project, mturk_worker=a.worker)
+                # get or create worker
+                project_worker, _ = ProjectWorker.objects.get_or_create(
+                    project=self.project,
+                    mturk_worker=a.worker
+                )
 
-                # create a submission from assignment
-                s, created = Submission.objects.get_or_create(assignment=a, task=self, worker=worker)
+                # create submission
+                submission, created = Submission.objects.get_or_created(
+                    assignment=a,
+                    task=self,
+                    project_worker=project_worker
+                )
 
                 # create responses from submission data
-                if created:
-                    s.create_responses()
+                if created and sync_responses:
+                    submission.sync_responses()
 
-        self.save()
-
-        # update child contents
-        for c in self.contents.filter(status='P'):
+    def sync_contents(self):
+        for c in self.contents.all():
             c.save()
 
-    def save(self, create_hit=True, *args, **kwargs):
-        # set self.hit
-        if self.hit is None and create_hit:
-            hit = MturkHit(
-                hit_type = self.hit_type
-            )
-            self.hit = self.project.hit_settings.new_hit()
+    # sync with MTurk to update HITs, assignments, submissions, and responses
+    def sync(self, sync_submissions=True, sync_responses=True, sync_contents=True):
+        # sync HIT and its assignments
+        self.hit.sync(sync_assignments=True)
 
+        if sync_submissions:
+            self.sync_submissions(sync_responses=sync_responses)
+
+        # update child contents
+        if sync_contents:
+            self.sync_contents()
+
+        # update itself
+        self.save()
+
+    def save(self, create_hit=True, *args, **kwargs):
         # set or update self.completed
-        self.completed = (self.num_submissions() >= self.num_submissions_required)
-        
+        self.completed = self._get_completed()
+
+        # this will also create HIT
         super(Task, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        self.hit.delete()
         # update the contents of this task after delete
         contents = self.contents.all()
         super(Task, self).delete(*args, **kwargs)
-        for content in contents:
-            content.save()
-
-    def __str__(self):
-        return str(self.id)
+        for c in contents:
+            c.save()
 
 
 class Submission(ModelBase):
-    """ Extends MturkAssignment """
+    """Extends MturkAssignment with relationships to task, worker, etc."""
 
-    # the corresponding MTurk assignment
-    assignment = models.OneToOneField(MturkAssignment, related_name='submission')
+    assignment = models.OneToOneField(
+        MturkAssignment,
+        related_name='polyverif_submission'
+    )
 
-    # submit for which task, set by assignment.hit.task during save()
-    task = models.ForeignKey(Task, related_name='submissions')
-
-    # who submitted, set by assignment.worker during save()
-    worker = models.ForeignKey(Worker, related_name='submissions')
-
-    # JSON data, set by assignment.answer_xml during save()
-    data = JSONField()
+    task = models.ForeignKey(Task)
+    project_worker = models.ForeignKey(ProjectWorker)
+    answer = JSONField()
 
     def save(self, *args, **kwargs):
-        # set task from HIT
-        if self.task is None:
-            self.task = self.assignment.hit.task
+        assert(self.task.hit == self.assignment.hit)
+        assert(self.project_worker.mturk_worker == self.assignment.worker)
 
-        # set worker from assignment
-        if self.worker is None:
-            self.worker, _ = Worker.objects.get_or_create(
-                project=self.task.project,
-                mturk_worker=self.assignment.worker
-            )
-        assert(self.worker.mturk_worker.id == self.assignment.worker.id)
-
-        # set data by parsing assignment's answer_xml
-        # assignment.answer_xml won't change, so this only need to be called once
-        if self.data is None:
-            self.data = parse_answer_xml(self.assignment.answer_xml)
+        # answer_xml won't change, so this only need to be called once
+        if self.answer is None:
+            self.answer = parse_answer_xml(self.assignment.answer_xml)
 
         super(Submission, self).save(*args, **kwargs)
 
-    def create_responses(self):
-        assert(self.data is not None and isinstance(self.data, list))
+    def sync_responses(self):
+        assert(self.answer is not None and isinstance(self.answer, list))
 
         # update responses from the parsed data
         for response in self.data:
@@ -260,7 +227,7 @@ class Submission(ModelBase):
             content = Content.objects.get(text_instance=instance_id)
 
             # response is only created once
-            response = Response.objects.get_or_create(
+            Response.objects.get_or_create(
                 submission=self,
                 content=content,
                 worker=self.worker,
@@ -272,11 +239,23 @@ class Submission(ModelBase):
 
     class Meta:
         # a worker should not produce more than one submissions per task
-        unique_together = ('task', 'worker')
+        unique_together = ('task', 'project_worker')
 
 
 class Content(ModelBase):
-    """ Content included in a task """
+    """Content included in a task. Extends CocoTextInstance."""
+
+    CONTENT_STATUS_CHOICES = (
+        ('U', 'Unassigned'),      # not assigned to a task
+        ('P', 'Pending'),         # assigned to a task, not enough responses received
+        ('C', 'Completed')        # enough responses received, completed
+    )
+
+    text_instance = models.OneToOneField(
+        CocoTextInstance,
+        on_delete=models.CASCADE,
+        related_name='polyverif_content'
+    )
 
     project = models.ForeignKey(
         Project,
@@ -284,33 +263,58 @@ class Content(ModelBase):
         related_name='contents'
     )
 
-    # content data
-    text_instance = models.ForeignKey(
-        CocoTextInstance,
-        on_delete=models.CASCADE
-    )
-
-    # content status
-    CONTENT_STATUS_CHOICES = (
-        ('U', 'Unassigned'),      # not assigned to a task
-        ('P', 'Pending'),         # assigned to a task, not enough responses received
-        ('C', 'Completed')        # enough responses received, completed
-    )
     status = models.CharField(
         max_length=1,
         choices=CONTENT_STATUS_CHOICES
     )
+    def _get_status(self):
+        if self.responses.count() >= self.num_responses_required or self.sentinel:
+            # content status is completed if 1) enough responses received, 2) is sentinel
+            status = 'C'
+        elif self.id is not None and self.tasks.count() > 0:
+            # pending if assigned to some tasks
+            status = 'P'
+        else:
+            status = 'U'
+        return status
 
     # num responses required, default is settings.POLYVERIF_MIN_CONSENSUS_COUNT
     num_responses_required = models.PositiveSmallIntegerField()
 
     # in which tasks is the content provided
-    tasks = models.ManyToManyField(Task, related_name='contents')
+    tasks = models.ManyToManyField(Task)
 
     # is the content a sentinel
     sentinel = models.BooleanField(default=False)
 
-    # groundtruth verification, non-null only if sentinel
+    consensus = models.CharField(
+        max_length=1,
+        null=True,
+        choices=VERIFICATION_CHOICES
+    )
+    def _get_consensus(self):
+        # if sentinel, use groundtruth
+        if self.sentinel == True:
+            return self.gt_verification
+        if self.status != 'C':
+            return None
+        consensus_min = settings.POLYVERIF_MIN_CONSENSUS_COUNT
+        num_correct = 0
+        num_wrong = 0
+        for res in self.responses.all():
+            if res.verification == 'C':
+                num_correct += 1
+            elif res.verification == 'W':
+                num_wrong += 1
+        if num_correct >= consensus_min:
+            result = 'C'
+        elif num_wrong >= consensus_min:
+            result = 'W'
+        else:
+            result = None
+        return result
+
+    # groundtruth verification. None if not a sentinel
     gt_verification = models.CharField(
         max_length=1,
         null=True,
@@ -321,55 +325,12 @@ class Content(ModelBase):
     def num_responses(self):
         return self.responses.count()
 
-    # the consensus verification, None if no consensus is reached
-    def get_consensus(self):
-        # if sentinel, use groundtruth
-        if self.sentinel == True:
-            return self.gt_verification
-
-        if self.status != 'C':
-            return None
-
-        consensus_min = settings.POLYVERIF_MIN_CONSENSUS_COUNT
-        num_correct = 0
-        num_wrong = 0
-        for res in self.responses.all():
-            if res.verification == 'C':
-                num_correct += 1
-            elif res.verification == 'W':
-                num_wrong += 1
-
-        if num_correct >= consensus_min:
-            result = 'C'
-        elif num_wrong >= consensus_min:
-            result = 'W'
-        else:
-            result = None
-        return result
-
-    consensus = models.CharField(
-        max_length=1,
-        null=True,
-        choices=VERIFICATION_CHOICES
-    )
-
     def save(self, *args, **kwargs):
         # set value for num_responses_required
         if self.num_responses_required is None:
             self.num_responses_required = settings.POLYVERIF_MIN_CONSENSUS_COUNT
-
-        # update status
-        if self.responses.count() >= self.num_responses_required or self.sentinel:
-            # content status is completed if 1) enough responses received, 2) is sentinel
-            self.status = 'C'
-        elif self.id is not None and self.tasks.count() > 0:
-            # pending if assigned to some tasks
-            self.status = 'P'
-        else:
-            self.status = 'U'
-
-        # update consensus status
-        self.consensus = self.get_consensus()
+        self.status = self._get_status()
+        self.consensus = self._get_consensus()
 
         super(Content, self).save(*args, **kwargs)
 
@@ -378,31 +339,31 @@ class Content(ModelBase):
 
 
 class Response(ModelBase):
-    """ Worker's response to a content. """
+    """Worker's response to a content. """
     
     # where the response was submitted
     submission = models.ForeignKey(
         Submission,
         on_delete=models.CASCADE,
-        related_name='responses'
     )
 
     # responded to which content
     content = models.ForeignKey(
         Content,
         on_delete=models.CASCADE,
-        related_name='responses'
     )
 
     # who responded
-    worker = models.ForeignKey(
-        Worker,
+    project_worker = models.ForeignKey(
+        ProjectWorker,
         on_delete=models.CASCADE,
-        related_name='responses'
     )
-    
+
     # response data: the verification
-    verification = models.CharField(max_length=1, choices=VERIFICATION_CHOICES)
+    verification = models.CharField(
+        max_length=1,
+        choices=VERIFICATION_CHOICES
+    )
 
     # return the correctness if responding a sentinel content
     def sentinel_correct(self):
@@ -414,4 +375,4 @@ class Response(ModelBase):
         return str(self.id)
 
     class Meta:
-        unique_together = ('submission', 'content', 'worker')
+        unique_together = ('submission', 'content', 'project_worker')
