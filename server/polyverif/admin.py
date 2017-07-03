@@ -27,7 +27,7 @@ admin.site.register(Submission, SubmissionAdmin)
 
 
 class ContentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project', 'text_instance', 'status', 'sentinel', 'num_responses_required', 'num_responses', 'gt_verification', 'consensus')
+    list_display = ('id', 'project', 'text_instance', 'status', 'sentinel', 'num_responses', 'gt_verification', 'consensus')
     readonly_fields = list_display
     list_filter = ('status', 'sentinel')
 admin.site.register(Content, ContentAdmin)

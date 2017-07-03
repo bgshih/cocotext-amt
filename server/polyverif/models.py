@@ -77,7 +77,10 @@ class ProjectWorker(ModelBase):
         related_name='polyverif_worker'
     )
 
-    project = models.ForeignKey(Project)
+    project = models.ForeignKey(
+        Project,
+        related_name='project_workers'
+    )
 
     def num_responses(self):
         return self.responses.count()
@@ -179,7 +182,7 @@ class Task(ModelBase):
         # update itself
         self.save()
 
-    def save(self, create_hit=True, *args, **kwargs):
+    def save(self, *args, **kwargs):
         # set or update self.completed
         self.completed = self._get_completed()
 
@@ -202,8 +205,15 @@ class Submission(ModelBase):
         related_name='polyverif_submission'
     )
 
-    task = models.ForeignKey(Task)
-    project_worker = models.ForeignKey(ProjectWorker)
+    task = models.ForeignKey(
+        Task,
+        related_name='submissions'
+    )
+    project_worker = models.ForeignKey(
+        ProjectWorker,
+        related_name='submissions'
+    )
+
     answer = JSONField()
 
     def save(self, *args, **kwargs):
@@ -247,7 +257,7 @@ class Content(ModelBase):
 
     CONTENT_STATUS_CHOICES = (
         ('U', 'Unassigned'),      # not assigned to a task
-        ('P', 'Pending'),         # assigned to a task, not enough responses received
+        ('P', 'Pending'),         # being worked on
         ('C', 'Completed')        # enough responses received, completed
     )
 
@@ -265,21 +275,19 @@ class Content(ModelBase):
 
     status = models.CharField(
         max_length=1,
-        choices=CONTENT_STATUS_CHOICES
+        choices=CONTENT_STATUS_CHOICES,
+        default='U'
     )
-    def _get_status(self):
-        if self.responses.count() >= self.num_responses_required or self.sentinel:
-            # content status is completed if 1) enough responses received, 2) is sentinel
-            status = 'C'
-        elif self.id is not None and self.tasks.count() > 0:
-            # pending if assigned to some tasks
-            status = 'P'
-        else:
-            status = 'U'
-        return status
-
-    # num responses required, default is settings.POLYVERIF_MIN_CONSENSUS_COUNT
-    num_responses_required = models.PositiveSmallIntegerField()
+    # def _get_status(self):
+    #     if self.responses.count() >= self.num_responses_required or self.sentinel:
+    #         # content status is completed if 1) enough responses received, 2) is sentinel
+    #         status = 'C'
+    #     elif self.id is not None and self.tasks.count() > 0:
+    #         # pending if assigned to some tasks
+    #         status = 'P'
+    #     else:
+    #         status = 'U'
+    #     return status
 
     # in which tasks is the content provided
     tasks = models.ManyToManyField(Task)
@@ -292,27 +300,27 @@ class Content(ModelBase):
         null=True,
         choices=VERIFICATION_CHOICES
     )
-    def _get_consensus(self):
-        # if sentinel, use groundtruth
-        if self.sentinel == True:
-            return self.gt_verification
-        if self.status != 'C':
-            return None
-        consensus_min = settings.POLYVERIF_MIN_CONSENSUS_COUNT
-        num_correct = 0
-        num_wrong = 0
-        for res in self.responses.all():
-            if res.verification == 'C':
-                num_correct += 1
-            elif res.verification == 'W':
-                num_wrong += 1
-        if num_correct >= consensus_min:
-            result = 'C'
-        elif num_wrong >= consensus_min:
-            result = 'W'
-        else:
-            result = None
-        return result
+    # def _get_consensus(self):
+    #     # if sentinel, use groundtruth
+    #     if self.sentinel == True:
+    #         return self.gt_verification
+    #     if self.status != 'C':
+    #         return None
+    #     consensus_min = settings.POLYVERIF_MIN_CONSENSUS_COUNT
+    #     num_correct = 0
+    #     num_wrong = 0
+    #     for res in self.responses.all():
+    #         if res.verification == 'C':
+    #             num_correct += 1
+    #         elif res.verification == 'W':
+    #             num_wrong += 1
+    #     if num_correct >= consensus_min:
+    #         result = 'C'
+    #     elif num_wrong >= consensus_min:
+    #         result = 'W'
+    #     else:
+    #         result = None
+    #     return result
 
     # groundtruth verification. None if not a sentinel
     gt_verification = models.CharField(
@@ -322,15 +330,18 @@ class Content(ModelBase):
     )
 
     # number of responses received
-    def num_responses(self):
+    num_responses = models.PositiveIntegerField(default=0)
+    def _get_num_responses(self):
         return self.responses.count()
 
     def save(self, *args, **kwargs):
         # set value for num_responses_required
-        if self.num_responses_required is None:
-            self.num_responses_required = settings.POLYVERIF_MIN_CONSENSUS_COUNT
-        self.status = self._get_status()
-        self.consensus = self._get_consensus()
+        # if self.num_responses_required is None:
+        #     self.num_responses_required = settings.POLYVERIF_MIN_CONSENSUS_COUNT
+        # self.status = self._get_status()
+        # self.consensus = self._get_consensus()
+
+        num_responses = self._get_num_responses()
 
         super(Content, self).save(*args, **kwargs)
 
@@ -345,18 +356,21 @@ class Response(ModelBase):
     submission = models.ForeignKey(
         Submission,
         on_delete=models.CASCADE,
+        related_name='responses'
     )
 
     # responded to which content
     content = models.ForeignKey(
         Content,
         on_delete=models.CASCADE,
+        related_name='responses'
     )
 
     # who responded
     project_worker = models.ForeignKey(
         ProjectWorker,
         on_delete=models.CASCADE,
+        related_name='responses'
     )
 
     # response data: the verification

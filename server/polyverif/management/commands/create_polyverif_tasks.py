@@ -1,6 +1,7 @@
 import math
 import json
 from tqdm import tqdm
+from datetime import timedelta
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
@@ -8,8 +9,7 @@ from django.conf import settings
 from polyverif.models import Project, Task
 
 
-HIT_QUESTION = """
-"""
+HIT_QUESTION = """<ExternalQuestion xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2006-07-14/ExternalQuestion.xsd"> <ExternalURL>https://polyverif.bgshi.me</ExternalURL> <FrameHeight>800</FrameHeight> </ExternalQuestion>"""
 
 
 class Command(BaseCommand):
@@ -29,7 +29,7 @@ class Command(BaseCommand):
             '--num_content_per_task',
             action='store',
             dest='num_content_per_task',
-            default=9,
+            default=16,
             type=int,
             help='Number of contents per task'
         )
@@ -48,7 +48,7 @@ class Command(BaseCommand):
                      num_content_per_task,
                      sentinel_portion,
                      max_num_tasks=None):
-        """ Create new tasks from pending and sentinel contents """
+        """Create new tasks from pending and sentinel contents """
         # constants
         # num_content_per_task = settings.POLYVERIF_NUM_CONTENT_PER_TASK
         # sentinel_portion = settings.POLYVERIF_SENTINEL_PORTION
@@ -86,13 +86,27 @@ class Command(BaseCommand):
                           list(range(num_to_assign))
         random.shuffle(content_indices)
 
-        for i in tqdm(range(num_tasks)):
-            task = Task(
-                project=project
-                num_submissions_required=
-                
-                )
-            task.save(create_hit=True)
+        hit_type = MturkHitType.object.get(id='3FKWIKNZF8P1QWGMRRQEZFI531R7E5')
+
+        for i in range(num_tasks):
+            # create HIT
+            hit, created = MturkHit.get_or_create(
+                hit_type        = hit_type,
+                max_assignments = 2,
+                lifetime        = timedelta(minutes=15),
+                question        = HIT_QUESTION,
+            )
+            if created:
+                print('HIT {} exists.'.format(hit))
+
+            # create task
+            task, created = Task.get_or_create(
+                hit     = hit
+                project = project
+            )
+            print('Task {} {}'.format(task, 'created' if created else 'exists'))
+
+            # create contents for this task
             for j in range(num_content_per_task):
                 content_index = content_indices[i * num_content_per_task + j]
                 if content_index < 0:
@@ -106,8 +120,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         project = Project.objects.get(name='PolygonVerification')
         create_tasks(
-            project=project,
-            num_content_per_task=options['num_content_per_task'],
-            sentinel_portion=options['sentinel_portion'],
-            max_num_tasks=options['max_num_tasks']
+            project              = project,
+            num_content_per_task = options['num_content_per_task'],
+            sentinel_portion     = options['sentinel_portion'],
+            max_num_tasks        = options['max_num_tasks']
         )

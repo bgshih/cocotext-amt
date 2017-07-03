@@ -15,8 +15,13 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **options):
-        project = Project.objects.get(name='PolygonVerification')
+        project = Project.objects.get(name='Polyverif')
         print('Retrieving CocoTextInstances...')
         instances_to_verify = CocoTextInstance.objects.filter(polygon_verification='U')
+
         for text_instance in tqdm(instances_to_verify):
-            Content.objects.get_or_create(project=project, text_instance=text_instance)
+            Content.objects.get_or_create(
+                status='U',
+                project=project,
+                text_instance=text_instance
+            )
