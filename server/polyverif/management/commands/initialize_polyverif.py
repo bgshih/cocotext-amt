@@ -15,7 +15,7 @@ ANSWER_XML_FILENAME = '/home/ubuntu/cocotext-v2/amt/server/polyverif/qualificati
 
 
 class Command(BaseCommand):
-    help = 'Initialize Polygon Verification'
+    help = 'Create QualificationType and HITType for PolygonVerification'
 
     def add_arguments(self, parser):
         pass

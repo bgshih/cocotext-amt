@@ -499,53 +499,61 @@ class QualificationType(ModelBase):
         print('QualificationType {} deleted on MTurk'.format(self.id))
         super(QualificationType, self).delete(*args, **kwargs)
 
+    def sync_requests(self, sync_workers=True):
+        assert(sync_workers == True)
+        page_size = 64
+
+        # retrieve all requests
+        qrequest_responses = []
+        response = get_mturk_client().list_qualification_requests(
+            QualificationTypeId=self.id,
+            MaxResults=page_size
+        )
+        qrequest_responses.extend(response['QualificationRequests'])
+        while 'NextToken' in response:
+            response = get_mturk_client().list_qualification_requests(
+                QualificationTypeId=self.id,
+                NextToken=response['NextToken'],
+                MaxResults=page_size
+            )
+            qrequest_responses.extend(response['QualificationRequests'])
+
+        for request in qrequest_responses:
+            assert(self.id == request['QualificationTypeId'])
+            worker, _ = MturkWorker.get_or_create(id=request['WorkerId'])
+            qrequest, created = QualificationRequest.get_or_create(
+                id          = request['QualificationRequestId'],
+                qtype       = self,
+                worker      = worker,
+                test        = request['Test'],
+                answer      = request['Answer'],
+                submit_time = request['SubmitTime']
+            )
+            print('QualificationRequest {} {}'.format(qrequest, 'created' if created else 'exists'))
+
     def sync(self, sync_requests=True):
         """ Sync status and its requests """
         # sync QualificationType status with MTurk
         response = get_mturk_client().get_qualification_type(
             QualificationTypeId=self.id
-        )
+        )['QualificationType']
         set_fields_from_params(
-            self, response, FIELD_PARAM_MAPPINGS,
+            self, response, self.FIELD_PARAM_MAPPINGS,
             ('qtype_status', 'is_requestable'))
         self.save()
 
         if sync_requests == True:
-            max_results = 64
-            next_token = None
-            num_results = None
-            while num_results is None or num_results == max_results:
-                params = {
-                    'QualificationTypeId': self.id,
-                    'MaxResults': max_results
-                }
-                if next_token is not None:
-                    params['NextToken'] = next_token
-                response = get_mturk_client().list_qualification_requests(**params)
-                num_results = response['NumResults']
-                next_token = response['NextToken']
-                
-                for request in response['QualificationRequests']:
-                    assert(self.id == request['QualificationTypeId'])
-                    worker, _ = MturkWorker.get_or_create(id=request['WorkerId'])
-                    QualificationRequest.get_or_create(
-                        id          = request['QualificationRequestId'],
-                        qtype       = self,
-                        worker      = worker,
-                        test        = request['Test'],
-                        answer      = request['Answer'],
-                        submit_time = request['SubmitTime']
-                    )
+            self.sync_requests()
 
     def __str__(self):
         return str(self.id)
 
 
 class QualificationRequest(ModelBase):
-    """QualificationRequest should be created by calling QualificationType.sync """
+    """QualificationRequest should be created by calling QualificationType.sync_requests"""
 
     id          = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
-    qtype       = models.ForeignKey(QualificationType)
+    qtype       = models.ForeignKey(QualificationType, related_name='requests')
     worker      = models.ForeignKey(MturkWorker)
     test        = models.TextField()
     answer      = models.TextField()
