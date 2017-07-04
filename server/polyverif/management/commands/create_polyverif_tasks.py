@@ -1,11 +1,13 @@
 import math
 import json
+import random
 from tqdm import tqdm
 from datetime import timedelta
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
+from polyverif.models import MturkHitType, MturkHit
 from polyverif.models import Project, Task
 
 
@@ -29,7 +31,7 @@ class Command(BaseCommand):
             '--num_content_per_task',
             action='store',
             dest='num_content_per_task',
-            default=16,
+            default=15,
             type=int,
             help='Number of contents per task'
         )
@@ -86,11 +88,11 @@ class Command(BaseCommand):
                           list(range(num_to_assign))
         random.shuffle(content_indices)
 
-        hit_type = MturkHitType.object.get(id='3FKWIKNZF8P1QWGMRRQEZFI531R7E5')
+        hit_type = MturkHitType.objects.get(id='3FKWIKNZF8P1QWGMRRQEZFI531R7E5')
 
         for i in range(num_tasks):
             # create HIT
-            hit, created = MturkHit.get_or_create(
+            hit, created = MturkHit.objects.get_or_create(
                 hit_type        = hit_type,
                 max_assignments = 2,
                 lifetime        = timedelta(minutes=15),
@@ -100,8 +102,8 @@ class Command(BaseCommand):
                 print('HIT {} exists.'.format(hit))
 
             # create task
-            task, created = Task.get_or_create(
-                hit     = hit
+            task, created = Task.objects.get_or_create(
+                hit     = hit,
                 project = project
             )
             print('Task {} {}'.format(task, 'created' if created else 'exists'))
@@ -118,8 +120,8 @@ class Command(BaseCommand):
 
 
     def handle(self, *args, **options):
-        project = Project.objects.get(name='PolygonVerification')
-        create_tasks(
+        project = Project.objects.get(name='Polyverif')
+        self.create_tasks(
             project              = project,
             num_content_per_task = options['num_content_per_task'],
             sentinel_portion     = options['sentinel_portion'],

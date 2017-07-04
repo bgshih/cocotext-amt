@@ -72,9 +72,9 @@ class App extends Component {
       .then((taskData) => {
         const contents = taskData['contents'];
         var cards = [];
-        for (var content of contents) {
+        for (var c of contents) {
           const card = {
-            instanceId: content.id,
+            instanceId: c.instanceId,
             verificationStatus: 'W'
           }
           cards.push(card);

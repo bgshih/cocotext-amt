@@ -21,7 +21,7 @@ VERIFICATION_CHOICES = (
 class Project(ModelBase):
     """ An object that keeps track of the tasks and contents """
     
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length=128, unique=True)
 
     # total number of contents in this project
     def num_contents(self):
@@ -196,6 +196,9 @@ class Task(ModelBase):
         for c in contents:
             c.save()
 
+    def __str__(self):
+        return str(self.id)
+
 
 class Submission(ModelBase):
     """Extends MturkAssignment with relationships to task, worker, etc."""
@@ -260,6 +263,11 @@ class Content(ModelBase):
         ('P', 'Pending'),         # being worked on
         ('C', 'Completed')        # enough responses received, completed
     )
+    CONSENSUS_CHOICES = (
+        ('D', 'Dispute'), # responses varies
+        ('C', 'Correct'), # all responded correct
+        ('W', 'Wrong')    # all responded wrong
+    )
 
     text_instance = models.OneToOneField(
         CocoTextInstance,
@@ -273,54 +281,62 @@ class Content(ModelBase):
         related_name='contents'
     )
 
+    # number of same responses to reach consensus
+    consensus_num = models.PositiveSmallIntegerField(default=3)
+
     status = models.CharField(
         max_length=1,
         choices=CONTENT_STATUS_CHOICES,
         default='U'
     )
-    # def _get_status(self):
-    #     if self.responses.count() >= self.num_responses_required or self.sentinel:
-    #         # content status is completed if 1) enough responses received, 2) is sentinel
-    #         status = 'C'
-    #     elif self.id is not None and self.tasks.count() > 0:
-    #         # pending if assigned to some tasks
-    #         status = 'P'
-    #     else:
-    #         status = 'U'
-    #     return status
+    def _get_status(self):
+        if self.id is None:
+            # before saving for the first time
+            return 'U'
+        elif self.sentinel == True or self.consensus is not None:
+            # if content is sentinel or has reached consensus, mark it as Completed
+            return 'C'
+        elif self.tasks.count() > 0:
+            # the content has been assigned to any tasks and is being worked
+            return 'P'
+        else:
+            # not assigned to any tasks
+            return 'U'
 
     # in which tasks is the content provided
-    tasks = models.ManyToManyField(Task)
+    tasks = models.ManyToManyField(Task, related_name='contents')
 
     # is the content a sentinel
     sentinel = models.BooleanField(default=False)
-
+    
     consensus = models.CharField(
         max_length=1,
-        null=True,
-        choices=VERIFICATION_CHOICES
+        null=True, # null if not no consensus reached
+        choices=CONSENSUS_CHOICES
     )
-    # def _get_consensus(self):
-    #     # if sentinel, use groundtruth
-    #     if self.sentinel == True:
-    #         return self.gt_verification
-    #     if self.status != 'C':
-    #         return None
-    #     consensus_min = settings.POLYVERIF_MIN_CONSENSUS_COUNT
-    #     num_correct = 0
-    #     num_wrong = 0
-    #     for res in self.responses.all():
-    #         if res.verification == 'C':
-    #             num_correct += 1
-    #         elif res.verification == 'W':
-    #             num_wrong += 1
-    #     if num_correct >= consensus_min:
-    #         result = 'C'
-    #     elif num_wrong >= consensus_min:
-    #         result = 'W'
-    #     else:
-    #         result = None
-    #     return result
+    def _get_consensus(self):
+        # if sentinel, use groundtruth
+        if self.sentinel == True:
+            return None
+
+        # A content is marked as Dispute if responses varies,
+        # Correct or Wrong if at least self.num_consensus responses agree
+        # self.consensus has None value if no conclusion reached
+        verifications = [res.verification for res in self.responses.all()]
+        if len(verifications) == 0:
+            return None
+        elif len(verifications) < self.consensus_num:
+            if not all([v == verifications[0] for v in verifications]):
+                return 'D'
+            else:
+                return None
+        else: # len(verifications) >= self.consensus_num:
+            if all([v == 'C' for v in verifications]):
+                return 'C'
+            elif all([v == 'W' for v in verifications]):
+                return 'W'
+            else:
+                return 'D'
 
     # groundtruth verification. None if not a sentinel
     gt_verification = models.CharField(
@@ -335,13 +351,9 @@ class Content(ModelBase):
         return self.responses.count()
 
     def save(self, *args, **kwargs):
-        # set value for num_responses_required
-        # if self.num_responses_required is None:
-        #     self.num_responses_required = settings.POLYVERIF_MIN_CONSENSUS_COUNT
-        # self.status = self._get_status()
-        # self.consensus = self._get_consensus()
-
-        num_responses = self._get_num_responses()
+        self.num_responses = self._get_num_responses()
+        self.consensus = self._get_consensus()
+        self.status = self._get_status()
 
         super(Content, self).save(*args, **kwargs)
 

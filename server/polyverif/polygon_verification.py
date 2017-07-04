@@ -6,7 +6,7 @@ from polyverif.models import Content, Response
 
 
 def get_task_data(request, hit_id):
-    task = MturkHit.objects.get(id=hit_id).task
+    task = MturkHit.objects.get(id=hit_id).polyverif_task
 
     task_data = {
         'type': 'PolygonVerification',
@@ -15,15 +15,12 @@ def get_task_data(request, hit_id):
     }
 
     for content in task.contents.all():
-        text_instance = content.text_instance
-        instance_id = text_instance.id
-
+        instance_id = content.text_instance.id
         task_data['contents'].append({
-            'id': instance_id,
+            'instanceId': instance_id,
             'verification': 'U'
         })
 
-        print(content.sentinel)
         if content.sentinel == True:
             task_data['gtAnswers'][instance_id] = content.gt_verification
     
