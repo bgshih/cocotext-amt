@@ -1,13 +1,34 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
+import {Button, ButtonGroup} from 'react-bootstrap';
 
 class ImgPart extends React.Component {
-  render(){
-    var temp = "";
-    var imgId = this.props.imgId.toString();
-    var imgUrl;
+  constructor(props){
+    super(props);
+    this.updateCanvas = this.updateCanvas.bind(this);
+  }
+  componentDidMount() {
+    this.updateCanvas(-1);
+  }
 
+  componentDidUpdate() {
+    this.updateCanvas(-1);
+  }
+
+  updateCanvas(flag) {
+    const ctx = this.refs.canvas.getContext('2d');
+    const image = new Image();
+    var imgId = this.props.imgId.toString();
+    var canvasWidth = this.props.canvasWidth;
+    var canvasHeight = this.props.canvasHeight;
+    var imgWidth = this.props.imgWidth;
+    var imgHeight = this.props.imgHeight;
+    var horMargin = (canvasWidth-imgWidth)/2;
+    var verMargin = (canvasHeight-imgHeight)/2;
+    var currAnnotations = this.props.currAnnotations;
+    var temp = "";
+    var imgUrl;
+    // TODO: need a scale
     for(var i=0;i<12-imgId.length;i++){
       temp+='0';
     }
@@ -18,9 +39,56 @@ class ImgPart extends React.Component {
       imgUrl = 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
     }
 
+    image.src = imgUrl;
+    image.onload = () => {
+      ctx.drawImage(image, horMargin, verMargin, canvasWidth, canvasHeight);
+      var isInitial = flag===-1;
+      var length = isInitial? currAnnotations.length : 1;
+      for(var i=0; i<length; i++){
+        var idx = isInitial? i : flag;
+        var currPolygon = currAnnotations[idx].polygon;
+        ctx.beginPath();
+        for(var j=0; j<currPolygon.length; j++){
+          var x = currPolygon[j].x+horMargin;
+          var y = currPolygon[j].y+verMargin;
+          if(j===0){
+            ctx.moveTo(x,y);
+          } else{
+            ctx.lineTo(x,y);
+          }
+        }
+        ctx.closePath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(0, 255, 0, 0.9)';
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
+        ctx.fill();  
+      }
+    }
+  }
+
+  render(){
+    var obj = this;
+    var currAnnotations = this.props.currAnnotations;
+    const currAnnotIds = [];
+
+    for(var i=0; i<currAnnotations.length; i++){
+      currAnnotIds.push(currAnnotations[i].annot_id.toString());
+    }
+
     return(
-        <img src={imgUrl} alt="img not found" 
-          style={{margin: "25px"}}/>
+      <div className="imgPart">
+          <canvas ref="canvas" 
+            height = {this.props.canvasHeight} 
+            width={this.props.canvasWidth}></canvas>
+
+          <ButtonGroup vertical className="annots">
+            {currAnnotIds.map(function(item, key){
+              return <Button key={key} bsStyle="primary" 
+              onClick={()=>{obj.updateCanvas(key)}}> {item} </Button>;
+            })}
+          </ButtonGroup>
+      </div>
     )
   }
 }
@@ -33,13 +101,11 @@ class App extends Component {
       jsonValue: {},
       idx: 0,
       imgId: -1,
-      currAnnotations: []
+      currAnnotations: [] 
     }
-
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleClickPrev = this.handleClickPrev.bind(this);
-    this.handleClickNext = this.handleClickNext.bind(this);
+    this.handleClick = this.handleClick.bind(this);
   }
 
   isJsonStr(str) {
@@ -84,28 +150,21 @@ class App extends Component {
     event.preventDefault();
   }
 
-  handleClickPrev(){
+  handleClick(flag){
     var currIdx = this.state.idx;
+    var isNext = flag===1;
     var idx;
-    if(currIdx!==0){
-      idx = currIdx-1;
-    } else {
-      idx = this.state.jsonValue.data.length-1;
+    var temp = isNext? this.state.jsonValue.data.length-1:0;
+    
+    if(this.state.imgId===-1){
+      alert ("Please input your json data and click update first!");
+      return;
     }
-    this.setState({
-      idx: idx,
-      imgId: this.state.jsonValue.data[idx].image_id,
-      currAnnotations: this.state.jsonValue.data[idx].annotations
-    })
-  }
-
-  handleClickNext(){
-    var currIdx = this.state.idx;
-    var idx;
-    if(currIdx!==this.state.jsonValue.data.length-1){
-      idx = currIdx+1;
+    
+    if(currIdx!==temp){
+      idx = isNext? currIdx+1 : currIdx-1;
     } else {
-      idx = 0;
+      idx = isNext? 0: this.state.jsonValue.data.length-1;
     }
     this.setState({
       idx: idx,
@@ -118,34 +177,37 @@ class App extends Component {
     return (
       <div className="App">
         <div className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
           <h2>Welcome to CoCo Browser</h2>
         </div>
 
         <div className="img">
-        <ImgPart imgId={this.state.imgId}/>  
+          <ImgPart imgId={this.state.imgId} canvasWidth={350} 
+            canvasHeight={350} imgWidth={300} imgHeight={300}
+            currAnnotations={this.state.currAnnotations}/>  
         </div>
 
         <div className="textArea">
+          <h4> Please input your json data below: </h4>
           <form onSubmit={this.handleSubmit}>
             <input type="text" value={this.state.value} onChange={this.handleChange} 
-              style={{width: "50%", height: "200px", margin: "5px"}}/>
+              style={{width: "50%", height: "135px", margin: "15px"}}/>
               <br/>
-            <input type="submit" value="Update" />
+              <ButtonGroup style={{margin: "15px"}}>
+                <Button type="submit" bsStyle="primary" >
+                  Update
+                </Button>
+                <Button  bsStyle="primary" onClick={()=>this.handleClick(-1)}>
+                  Previous
+                </Button>
+                <Button bsStyle="primary" onClick={()=> this.handleClick(1)}>
+                  Next
+                </Button>
+              </ButtonGroup>
           </form>
-
-          <button onClick = {this.handleClickPrev}>
-            Previous
-          </button>
-
-          <button onClick = {this.handleClickNext}>
-            next
-          </button>
-        </div>
+        </div> 
       </div>
     );
   }
-  
 }
 
 export default App;
