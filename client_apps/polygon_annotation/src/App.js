@@ -28,10 +28,16 @@ export class App extends Component {
 
   componentDidMount() {
     this.setInfobar('info', 'To start drawing, click the "New Polygon" button.');
-    this.fetchTaskData();
+
+    const urlParams = this.parseUrlParams();
+    this.fetchTaskData(urlParams);
+
+    this.setState({
+      urlParams: urlParams
+    });
   }
 
-  fetchTaskData() {
+  parseUrlParams() {
     // parse URL
     const parseSearchString = (searchStr) => {
       if (searchStr.startsWith('?')) {
@@ -52,20 +58,19 @@ export class App extends Component {
       console.log('key: ' + k + '; value: ' + urlParams[k]);
     }
 
-    this.setState({
-      urlParams: urlParams
-    })
+    return urlParams;
+  }
 
+  fetchTaskData(urlParams) {
     // fetch task data and set state
-    const fetchUrl = window.location.origin + '/poly-annot-task/by-hit/' + urlParams['hitId'];
-    console.log('Fetching ' + fetchUrl);
+    const fetchUrl = window.location.origin + '/polyannot/task/' + urlParams['hitId'];
     fetch(fetchUrl)
       .then((response) => response.json())
-      .then((responseJson) => {
+      .then((taskData) => {
         this.setState({
-          'imageUrl': responseJson.imageUrl,
-          'hints': responseJson.hints,
-          'existingPolygons': responseJson.existingPolygons,
+          'imageUrl': taskData.imageUrl,
+          'hints': taskData.hints,
+          'staticPolygons': taskData.staticPolygons,
         })
       });
   }
@@ -85,7 +90,7 @@ export class App extends Component {
                     height="600"
                     imageUrl={this.state.imageUrl}
                     hints={this.state.hints}
-                    existingPolygons={this.state.existingPolygons}
+                    staticPolygons={this.state.staticPolygons}
                     urlParams={this.state.urlParams} />
           </ListGroupItem>
 

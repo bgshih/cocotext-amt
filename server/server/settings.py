@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'common.apps.CommonConfig',
-    'polyverif.apps.PolyverifConfig'
+    'polyverif.apps.PolyverifConfig',
+    'polyannot.apps.PolyannotConfig'
 ]
 
 MIDDLEWARE = [
@@ -149,7 +150,10 @@ TEXT_INSTANCE_CROP_MARGIN_RATIO = 1.0
 # Directory of the MSCOCO images
 LOCAL_COCO_IMAGE_DIR = '/home/ubuntu/data/coco-images/train2014'
 
-# PolygonVerification
+# Polygon verification
 POLYVERIF_NUM_CONTENT_PER_TASK = 9
 POLYVERIF_SENTINEL_PORTION = 0.05
 POLYVERIF_MIN_CONSENSUS_COUNT = 3
+
+# Polygon annotation
+COCOTEXT_IMAGE_URL_TEMPLATE = 'https://s3.amazonaws.com/cocotext-images/train2014/COCO_train2014_{:0>12}.jpg'

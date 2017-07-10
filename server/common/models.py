@@ -65,13 +65,13 @@ class CocoTextInstance(ModelBase):
     # If imported from v1, use original ID
     id                      = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
     image                   = models.ForeignKey(CocoTextImage,
-                                                related_name='instances',
+                                                related_name='text_instances',
                                                 on_delete=models.CASCADE)
     # Polygon format : [{x: number, y: number}, ...]
     polygon                 = JSONField()
     text                    = models.CharField(max_length=256, null=True)
     language                = models.CharField(max_length=128, null=True)
-    legibility              = models.CharField(max_length=1, choices=LEGIBILITY_CHOICES)
+    legibility              = models.CharField(max_length=1, choices=LEGIBILITY_CHOICES, null=True)
     text_class              = models.CharField(max_length=1, choices=TEXT_CLASS_CHOICES, null=True)
     # Instance is inherited from V1
     from_v1                 = models.BooleanField(default=False)
@@ -81,6 +81,9 @@ class CocoTextInstance(ModelBase):
     text_verification       = models.CharField(max_length=1, choices=VERIFICATION_STATUS_CHOICES, default='U')
     legibility_verification = models.CharField(max_length=1, choices=VERIFICATION_STATUS_CHOICES, default='U')
     language_verification   = models.CharField(max_length=1, choices=VERIFICATION_STATUS_CHOICES, default='U')
+
+    # create a new instance to correct an old one
+    parent_instance         = models.ForeignKey('CocoTextInstance', null=True)
 
     def __str__(self):
         return str(self.id)
@@ -99,6 +102,11 @@ class MturkHitType(ModelBase):
     keywords            = models.CharField(max_length=256)
     description         = models.TextField()
     qrequirements       = JSONField(null=True)
+
+    slug = models.CharField(
+        max_length=128,
+        unique=True
+    )
 
     FIELD_PARAM_MAPPINGS = (
         ('id', 'HITTypeId'),
@@ -129,7 +137,7 @@ class MturkHitType(ModelBase):
         super(MturkHitType, self).save(*args, **kwargs)
 
     def __str__(self):
-        return str(self.id)
+        return self.slug
 
 
 class MturkWorker(ModelBase):
@@ -418,6 +426,11 @@ class QualificationType(ModelBase):
     auto_granted       = models.BooleanField()
     auto_granted_value = models.IntegerField(null=True)
 
+    slug = models.CharField(
+        max_length=128,
+        unique=True
+    )
+
     FIELD_PARAM_MAPPINGS = (
         ('id', 'QualificationTypeId'),
         ('creation_time', 'CreationTime'),
@@ -546,7 +559,7 @@ class QualificationType(ModelBase):
             self.sync_requests()
 
     def __str__(self):
-        return str(self.id)
+        return self.slug
 
 
 class QualificationRequest(ModelBase):

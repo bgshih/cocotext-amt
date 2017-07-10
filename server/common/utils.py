@@ -133,3 +133,14 @@ def validate_list_of_integer(value):
     for v in value:
         if not isinstance(value, int):
             raise ValidationError('Input value should be a list of integers')
+
+
+def polygon_iou(poly1, poly2):
+    raise NotImplementedError('')
+
+
+def polygon_center(polygon):
+    avg = lambda l: sum(l) / len(l)
+    center_x = avg([p['x'] for p in polygon])
+    center_y = avg([p['y'] for p in polygon])
+    return {'x': center_x, 'y': center_y}

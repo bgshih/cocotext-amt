@@ -7,7 +7,7 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
-from polyverif.models import MturkHitType, MturkHit
+from common.models import MturkHitType, MturkHit
 from polyverif.models import Project, Task
 
 
@@ -88,18 +88,17 @@ class Command(BaseCommand):
                           list(range(num_to_assign))
         random.shuffle(content_indices)
 
-        hit_type = MturkHitType.objects.get(id='3FKWIKNZF8P1QWGMRRQEZFI531R7E5')
+        # hit_type = MturkHitType.objects.get(id='3FKWIKNZF8P1QWGMRRQEZFI531R7E5')
+        hit_type = MturkHitType.objects.get(slug='polyverif-main')
 
         for i in range(num_tasks):
             # create HIT
-            hit, created = MturkHit.objects.get_or_create(
+            hit = MturkHit.objects.create(
                 hit_type        = hit_type,
                 max_assignments = 2,
                 lifetime        = timedelta(minutes=15),
                 question        = HIT_QUESTION,
             )
-            if created:
-                print('HIT {} exists.'.format(hit))
 
             # create task
             task, created = Task.objects.get_or_create(
@@ -108,7 +107,7 @@ class Command(BaseCommand):
             )
             print('Task {} {}'.format(task, 'created' if created else 'exists'))
 
-            # create contents for this task
+            # assign contents for this task
             for j in range(num_content_per_task):
                 content_index = content_indices[i * num_content_per_task + j]
                 if content_index < 0:

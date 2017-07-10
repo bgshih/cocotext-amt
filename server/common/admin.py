@@ -4,6 +4,7 @@ from common.models import *
 
 
 class MturkHitTypeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'slug', 'title', 'reward')
     readonly_fields = ('id', 'auto_approval_delay', 'assignment_duration', 'reward',
                        'title', 'keywords', 'description', 'qrequirements')
 admin.site.register(MturkHitType, MturkHitTypeAdmin)
@@ -28,7 +29,7 @@ class MturkHitAdmin(admin.ModelAdmin):
     readonly_fields = [f.name for f in MturkHit._meta.fields]
     list_display = [
         f.name for f in MturkHit._meta.fields if not \
-            f.name in ('added', 'updated', 'hit_group_id')
+            f.name in ('added', 'updated', 'question')
     ]
 admin.site.register(MturkHit, MturkHitAdmin)
 
@@ -52,5 +53,5 @@ admin.site.register(MturkWorker, MturkWorkerAdmin)
 
 class QualificationTypeAdmin(admin.ModelAdmin):
     readonly_fields = ('added', 'updated', 'id', 'creation_time', 'is_requestable')
-    list_display = ('id', 'creation_time', 'name', 'is_requestable')
+    list_display = ('id', 'slug', 'creation_time', 'name', 'is_requestable')
 admin.site.register(QualificationType, QualificationTypeAdmin)

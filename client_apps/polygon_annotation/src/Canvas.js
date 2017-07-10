@@ -14,9 +14,11 @@ export class Canvas extends Component {
   }
 
   componentDidMount() {
+    // setup paper.js on canvas
     window.paper.setup(this.refs.rawCanvas);
     window.paper.settings.handleSize = 8;
 
+    // create paper.js layers
     // layer order: imageLayer on the bottom, annotationShapeLayer on the top
     this.imageLayer = window.paper.project.activeLayer;
     this.staticShapeLayer = new window.paper.Layer();
@@ -28,7 +30,7 @@ export class Canvas extends Component {
     window.addEventListener(eventTypes.SUBMIT_ANNOTATIONS, this.submitAnnotations.bind(this));
     window.addEventListener(eventTypes.TOGGLE_HINTS, this.toggleHints.bind(this));
 
-    // create image layer
+    // create image raster
     this.imageLayer.activate();
     this.raster = new window.paper.Raster();
 
@@ -39,7 +41,7 @@ export class Canvas extends Component {
     if (this.props.imageUrl !== nextProps.imageUrl) {
       this.loadImage(nextProps.imageUrl);
       this.drawHints(nextProps.hints);
-      // this.drawStaticPolygons(nextProps.existingPolygons);
+      this.drawStaticPolygons(nextProps.staticPolygons);
     }
   }
 
@@ -47,6 +49,8 @@ export class Canvas extends Component {
    * Load image from given URL and change the view to fit the image.
    */
   loadImage(imageUrl) {
+    this.imageLayer.activate();
+
     this.raster.source = imageUrl;
     this.raster.onLoad = () => {
       // in the project space, image is aligned to the topleft
@@ -85,11 +89,24 @@ export class Canvas extends Component {
    * Draw existing polygons on the static shape layer.
    */
   drawStaticPolygons(polygons) {
-    console.error('Not implemented');
     this.staticShapeLayer.activate();
 
-    // TODO
+    for (var i = 0; i < polygons.length; i++) {
+      const polygonPoints = polygons[i];
 
+      var staticPolygon = new window.paper.Path();
+      for (var j = 0; j < polygonPoints.length; j++) {
+        const pointX = polygonPoints[j].x;
+        const pointY = polygonPoints[j].y;
+        staticPolygon.add(new window.paper.Point(pointX, pointY));
+      }
+      staticPolygon.closed = true;
+      staticPolygon.selected = false;
+      staticPolygon.fillColor = 'rgba(0, 0, 255, 0.4)';
+      staticPolygon.strokeColor = 'rgba(0, 0, 255, 0.8)';
+      staticPolygon.strokeWidth = 1;
+    }
+    
     this.annotationShapeLayer.activate();
   }
 
