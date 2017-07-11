@@ -37,9 +37,7 @@ QUESTION_TEMPALTE = \
           <Type>image</Type>
           <SubType>png</SubType>
         </MimeType>
-        <DataURL>
-          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q{0}.png
-        </DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q{0}.png</DataURL>
         <AltText>Question-{0}</AltText>
       </Binary>
     </QuestionContent>
@@ -74,7 +72,7 @@ ANSWER_KEY_TEMPLATE = \
 """
 
 QUESTION_ANSWER_TEMPLATE = \
-"""  <Question>
+"""<Question>
     <QuestionIdentifier>Q{0}</QuestionIdentifier>
     <AnswerOption>
       <SelectionIdentifier>{1}</SelectionIdentifier>

@@ -119,14 +119,14 @@ export class Canvas extends Component {
     // collect polygon data
     var polygonData = [];
     for (const polygon of this.annotationShapeLayer.children) {
-      const points = [];
+      const polygonPoints = [];
       for (const segment of polygon.segments) {
-        points.push({
+        polygonPoints.push({
           x: segment.getPoint().x,
           y: segment.getPoint().y
         })
       }
-      polygonData.push(points);
+      polygonData.push(polygonPoints);
     }
 
     var form = document.createElement("form");

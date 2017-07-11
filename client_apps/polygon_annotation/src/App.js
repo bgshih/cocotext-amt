@@ -40,6 +40,8 @@ export class App extends Component {
   parseUrlParams() {
     // parse URL
     const parseSearchString = (searchStr) => {
+      console.log(searchStr);
+      
       if (searchStr.startsWith('?')) {
         searchStr = searchStr.substring(1);
       }

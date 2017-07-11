@@ -30,8 +30,16 @@ class Project(ModelBase):
     def num_completed_tasks(self):
         return self.tasks.filter(completed=True).count()
 
-    def sync(self):
-        pass
+    def sync(self, skip_completed_tasks=True):
+        tasks = self.tasks.filter(completed=False) if skip_completed_tasks == True else \
+                self.tasks.all()
+        print('[1/2] Synching tasks, submissions, responses, and workers')
+        print('Synching {} tasks'.format(tasks.count()))
+        for task in tqdm(tasks):
+            task.sync()
+        
+        # print('[2/2] Synching contents')
+
 
     def __str__(self):
         return self.name
@@ -49,8 +57,10 @@ class ProjectWorker(ModelBase):
         related_name='project_workers'
     )
 
+    admin = models.BooleanField(default=False)
+
     def __str__(self):
-        return self.id
+        return str(self.id)
 
     class Meta:
         unique_together = ('mturk_worker', 'project')
@@ -77,6 +87,40 @@ class Task(ModelBase):
         related_name='tasks'
     )
 
+    def sync_submissions(self, sync_responses=True, create_contents=True):
+        for a in self.hit.assignments.all():
+            # if hasattr(a, 'polyannot_submission') and a.polyannot_submission is not None:
+            #     continue
+
+            project_worker, _ = ProjectWorker.objects.get_or_create(
+                project=self.project,
+                mturk_worker=a.worker
+            )
+
+            submission, _ = Submission.objects.get_or_create(
+                assignment=a,
+                task=self,
+                project_worker=project_worker
+            )
+
+            if sync_responses:
+                submission.sync_responses(create_contents=create_contents)
+
+    def sync(self, sync_submissions=True, sync_responses=True, create_contents=True):
+        self.hit.sync(sync_assignments=True)
+
+        if sync_submissions:
+            self.sync_submissions(
+                sync_responses=sync_responses,
+                create_contents=create_contents
+            )
+
+        self.save()
+
+    def save(self, *args, **kwargs):
+        # TODO: set self.completed
+        super(Task, self).save(*args, **kwargs)
+
     def __str__(self):
         return str(self.id)
 
@@ -99,11 +143,36 @@ class Submission(ModelBase):
         related_name='submissions'
     )
 
-    answer = JSONField()
+    answer = JSONField(null=True)
 
-    def create_contents(self):
-        """Create contents from answer."""
-        pass
+    def sync_responses(self, create_contents=True):
+        # the answer must be list of polygons, each represented by a list of points
+        # each in {'x': ..., 'y': ...} format
+        assert(self.answer is not None and isinstance(self.answer, list))
+        assert(create_contents == True)
+        
+        for i, responseData in enumerate(self.answer):
+            # if 'respondingContentId' in responseData:
+            #     respondingContent = Content.objects.get(id=responseData['respondingContentId'])
+            # else:
+            #     respondingContent = None
+
+            respondingContent = None
+
+            Response.objects.get_or_create(
+                task           = self.task,
+                submission     = self,
+                submission_idx = i,
+                project_worker = self.project_worker,
+                content        = respondingContent,
+                polygon        = responseData
+            )
+
+    def save(self, *args, **kwargs):
+        if self.answer is None:
+            self.answer = parse_answer_xml(self.assignment.answer_xml)
+
+        super(Submission, self).save(*args, **kwargs)
 
     def __str__(self):
         return str(self.id)
@@ -135,9 +204,11 @@ class Content(ModelBase):
 
 class Response(ModelBase):
     """Worker annotations."""
-    task       = models.ForeignKey(Task, related_name='responses')
-    submission = models.ForeignKey(Submission, related_name='responses')
-    worker     = models.ForeignKey(ProjectWorker, related_name='responses')
+    task           = models.ForeignKey(Task, related_name='responses')
+    submission     = models.ForeignKey(Submission, related_name='responses')
+    project_worker = models.ForeignKey(ProjectWorker, related_name='responses')
+    # index within the submission
+    submission_idx = models.PositiveSmallIntegerField()
 
     # Respond to which content.
     # The field is only used in hinted annotation mode
@@ -165,23 +236,30 @@ class Response(ModelBase):
         iou = polygon_iou(self.polygon, sentinel_polygon)
         return iou >= iou_threshold
 
-    def save(self, create_instance=True, *args, **kwargs):
-        if self.text_instance is None and self.polygon is not None:
-            # create a new text_instance
-            if self.content is None:
-                parent_instance = None
-            else:
-                parent_instance = self.content.text_instance
+    def create_instance(self):
+        # create a new text_instance
+        if self.content is None:
+            parent_instance = None
+        else:
+            parent_instance = self.content.text_instance
 
-            self.text_instance = CocoTextInstance.create(
-                id              = str(uuid.uuid4()),
-                image           = task.image,
-                polygon         = polygon,
-                from_v1         = False,
-                parent_instance = parent_instance
-            )
+        self.text_instance = CocoTextInstance.objects.create(
+            id              = str(uuid.uuid4()),
+            image           = self.task.image,
+            polygon         = self.polygon,
+            from_v1         = False,
+            parent_instance = parent_instance
+        )
+
+    def save(self, create_instance=True, *args, **kwargs):
+        if create_instance == True and self.text_instance is None and self.polygon is not None:
+            # should only created once
+            self.create_instance()
 
         super(Response, self).save(*args, **kwargs)
 
     def __str__(self):
         return str(self.id)
+
+    class Meta:
+        unique_together = ('submission', 'submission_idx')

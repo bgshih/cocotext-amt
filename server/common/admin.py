@@ -22,6 +22,7 @@ class CocoTextInstanceAdmin(admin.ModelAdmin):
     list_display = [f.name for f in CocoTextInstance._meta.fields if not \
         f.name in ('added', 'updated', 'polygon')
     ]
+    list_filter = ('from_v1',)
 admin.site.register(CocoTextInstance, CocoTextInstanceAdmin)
 
 
@@ -55,3 +56,9 @@ class QualificationTypeAdmin(admin.ModelAdmin):
     readonly_fields = ('added', 'updated', 'id', 'creation_time', 'is_requestable')
     list_display = ('id', 'slug', 'creation_time', 'name', 'is_requestable')
 admin.site.register(QualificationType, QualificationTypeAdmin)
+
+
+class QualificationRequestAdmin(admin.ModelAdmin):
+    readonly_fields = ('added', 'updated', 'id', 'qtype', 'worker', 'test', 'answer', 'submit_time')
+    list_display = ('id', 'qtype', 'worker', 'submit_time')
+admin.site.register(QualificationRequest, QualificationRequestAdmin)

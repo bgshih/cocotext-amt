@@ -13,6 +13,7 @@ def get_mturk_client():
 PARSE_REGEX = re.compile(r"<FreeText>(.*)</FreeText>", re.MULTILINE)
 
 def parse_answer_xml(answer_xml):
+    """Parse MTurk assignment answer xml and return a JSON object."""
     answer_text = PARSE_REGEX.search(answer_xml).group(1)
     answer = json.loads(answer_text)
     return answer
@@ -80,18 +81,20 @@ def set_fields_from_params(obj, params, mappings, field_names):
             field_names: Fields to set
     """
     for field_name in field_names:
-        if not hasattr(obj, field_name):
-            raise ValueError('Object {} has no field named {}'.format(obj, field_name))
+        # if not hasattr(obj, field_name):
+        #     raise ValueError('Object {} has no field named {}'.format(obj, field_name))
         
         mapping = _find_mapping_by_field_name(field_name, mappings)
         
         if len(mapping) == 2: # direct copy
             field_name, param_key = mapping
-            setattr(obj, field_name, params[param_key])
+            if param_key in params:
+                setattr(obj, field_name, params[param_key])
         elif len(mapping) == 4: # mapping functions
             field_name, param_key, _, p2f_fn = mapping
-            field_value = p2f_fn(params[param_key])
-            setattr(obj, field_name, field_value)
+            if param_key in params:
+                field_value = p2f_fn(params[param_key])
+                setattr(obj, field_name, field_value)
         else:
             raise ValueError('Mappings must be 2- or 4-tuples.')
 

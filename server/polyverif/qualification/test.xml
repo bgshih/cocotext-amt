@@ -28,9 +28,7 @@
           <Type>image</Type>
           <SubType>png</SubType>
         </MimeType>
-        <DataURL>
-          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q1.png
-        </DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q1.png</DataURL>
         <AltText>Question-1</AltText>
       </Binary>
     </QuestionContent>
@@ -65,9 +63,7 @@
           <Type>image</Type>
           <SubType>png</SubType>
         </MimeType>
-        <DataURL>
-          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q2.png
-        </DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q2.png</DataURL>
         <AltText>Question-2</AltText>
       </Binary>
     </QuestionContent>
@@ -102,9 +98,7 @@
           <Type>image</Type>
           <SubType>png</SubType>
         </MimeType>
-        <DataURL>
-          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q3.png
-        </DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q3.png</DataURL>
         <AltText>Question-3</AltText>
       </Binary>
     </QuestionContent>
@@ -139,9 +133,7 @@
           <Type>image</Type>
           <SubType>png</SubType>
         </MimeType>
-        <DataURL>
-          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q4.png
-        </DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q4.png</DataURL>
         <AltText>Question-4</AltText>
       </Binary>
     </QuestionContent>
@@ -176,9 +168,7 @@
           <Type>image</Type>
           <SubType>png</SubType>
         </MimeType>
-        <DataURL>
-          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q5.png
-        </DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q5.png</DataURL>
         <AltText>Question-5</AltText>
       </Binary>
     </QuestionContent>
@@ -213,9 +203,7 @@
           <Type>image</Type>
           <SubType>png</SubType>
         </MimeType>
-        <DataURL>
-          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q6.png
-        </DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q6.png</DataURL>
         <AltText>Question-6</AltText>
       </Binary>
     </QuestionContent>
@@ -250,9 +238,7 @@
           <Type>image</Type>
           <SubType>png</SubType>
         </MimeType>
-        <DataURL>
-          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q7.png
-        </DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q7.png</DataURL>
         <AltText>Question-7</AltText>
       </Binary>
     </QuestionContent>
@@ -287,9 +273,7 @@
           <Type>image</Type>
           <SubType>png</SubType>
         </MimeType>
-        <DataURL>
-          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q8.png
-        </DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q8.png</DataURL>
         <AltText>Question-8</AltText>
       </Binary>
     </QuestionContent>
@@ -324,9 +308,7 @@
           <Type>image</Type>
           <SubType>png</SubType>
         </MimeType>
-        <DataURL>
-          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q9.png
-        </DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q9.png</DataURL>
         <AltText>Question-9</AltText>
       </Binary>
     </QuestionContent>
@@ -361,9 +343,7 @@
           <Type>image</Type>
           <SubType>png</SubType>
         </MimeType>
-        <DataURL>
-          https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q10.png
-        </DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q10.png</DataURL>
         <AltText>Question-10</AltText>
       </Binary>
     </QuestionContent>

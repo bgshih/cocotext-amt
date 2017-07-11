@@ -9,7 +9,7 @@ admin.site.register(Project, ProjectAdmin)
 
 
 class ProjectWorkerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'mturk_worker', 'project')
+    list_display = ('id', 'mturk_worker', 'project', 'admin')
     readonly_fields = list_display
 admin.site.register(ProjectWorker, ProjectWorkerAdmin)
 
@@ -33,6 +33,6 @@ admin.site.register(Content, ContentAdmin)
 
 
 class ResponseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'task', 'submission', 'worker', 'content', 'text_instance')
-    readonly_fields = ('id', 'task', 'submission', 'worker', 'content', 'text_instance', 'polygon')
+    list_display = ('id', 'task', 'submission', 'submission_idx', 'project_worker', 'content', 'text_instance')
+    readonly_fields = ('id', 'task', 'submission', 'submission_idx', 'project_worker', 'content', 'text_instance', 'polygon')
 admin.site.register(Response, ResponseAdmin)

@@ -83,7 +83,7 @@ class CocoTextInstance(ModelBase):
     language_verification   = models.CharField(max_length=1, choices=VERIFICATION_STATUS_CHOICES, default='U')
 
     # create a new instance to correct an old one
-    parent_instance         = models.ForeignKey('CocoTextInstance', null=True)
+    parent_instance         = models.ForeignKey('CocoTextInstance', null=True, related_name='child_instances')
 
     def __str__(self):
         return str(self.id)
@@ -210,7 +210,7 @@ class MturkHit(ModelBase):
     review_status_str_to_key = dict((v, k) for (k, v) in REVIEW_STATUS_CHOICES)
 
     id                        = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
-    hit_type                  = models.ForeignKey(MturkHitType)
+    hit_type                  = models.ForeignKey(MturkHitType, related_name='hits')
     hit_layout_id             = models.CharField(max_length=MAX_ID_LENGTH, null=True)
     hit_layout_parameters     = JSONField(null=True)
     hit_group_id              = models.CharField(max_length=MAX_ID_LENGTH)
@@ -268,7 +268,7 @@ class MturkHit(ModelBase):
             AssignmentStatuses=['Submitted', 'Approved', 'Rejected']
         )['Assignments']
         for assignment_response in response:
-            MturkAssignment.create_or_update_from_response(assignment_response, save=True)
+            MturkAssignment.create_or_update_from_response(assignment_response)
 
     def sync(self, sync_assignments=True):
         """Sync status with AMT, also sync its assignments """
@@ -321,8 +321,8 @@ class MturkAssignment(ModelBase):
     
     id                 = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
     assignment_status  = models.CharField(max_length=1, choices=ASSIGNMENT_STATUS_CHOICES)
-    worker             = models.ForeignKey(MturkWorker)
-    hit                = models.ForeignKey(MturkHit)
+    worker             = models.ForeignKey(MturkWorker, related_name='assignments')
+    hit                = models.ForeignKey(MturkHit, related_name='assignments')
     auto_approval_time = models.DateTimeField(null=True)
     accept_time        = models.DateTimeField(null=True)
     submit_time        = models.DateTimeField(null=True)
@@ -389,7 +389,7 @@ class MturkAssignment(ModelBase):
             assignment = cls()
         
         # create worker object if new MTurk worker comes in
-        MturkWorker.get_or_create(id=response['WorkerId'])
+        MturkWorker.objects.get_or_create(id=response['WorkerId'])
 
         set_fields_from_params(
             assignment, response, assignment.FIELD_PARAM_MAPPINGS,
@@ -397,6 +397,7 @@ class MturkAssignment(ModelBase):
             'auto_approval_time', 'accept_time', 'submit_time', 'approval_time',
             'rejection_time', 'deadline', 'answer_xml', 'requester_feedback')
         )
+
         assignment.save()
         return assignment
 
@@ -424,7 +425,7 @@ class QualificationType(ModelBase):
     retry_delay        = models.DurationField()
     is_requestable     = models.BooleanField()
     auto_granted       = models.BooleanField()
-    auto_granted_value = models.IntegerField(null=True)
+    auto_granted_value = models.IntegerField(blank=True, null=True)
 
     slug = models.CharField(
         max_length=128,
@@ -477,7 +478,7 @@ class QualificationType(ModelBase):
         client.disassociate_qualification_from_worker(**params)
         print('QualificationType {} disassociated from worker {}'.format(self.id, worker))
 
-    def save(self, *args, **kwargs):
+    def save(self, update_on_mturk=True, *args, **kwargs):
         if not self.id: # ID is None or empty string
             # create QualificationType on MTurk
             params = get_params_from_fields(
@@ -494,14 +495,15 @@ class QualificationType(ModelBase):
             )
         else:
             # update QualificationType on Mturk
-            params = get_params_from_fields(
-                self, self.FIELD_PARAM_MAPPINGS,
-                ('id', 'description', 'qtype_status', 'test', 'answer_key',
-                 'test_duration', 'retry_delay', 'auto_granted', 'auto_granted_value'),
-                skip_none=True
-            )
-            get_mturk_client().update_qualification_type(**params)
-            print('QualificationType {} updated on MTurk'.format(self.id))
+            if update_on_mturk:
+                params = get_params_from_fields(
+                    self, self.FIELD_PARAM_MAPPINGS,
+                    ('id', 'description', 'qtype_status', 'test', 'answer_key',
+                    'test_duration', 'retry_delay', 'auto_granted', 'auto_granted_value'),
+                    skip_none=True
+                )
+                get_mturk_client().update_qualification_type(**params)
+                print('QualificationType {} updated on MTurk'.format(self.id))
 
         super(QualificationType, self).save(*args, **kwargs)
 
@@ -522,6 +524,7 @@ class QualificationType(ModelBase):
             QualificationTypeId=self.id,
             MaxResults=page_size
         )
+        print(response)
         qrequest_responses.extend(response['QualificationRequests'])
         while 'NextToken' in response:
             response = get_mturk_client().list_qualification_requests(
@@ -553,7 +556,7 @@ class QualificationType(ModelBase):
         set_fields_from_params(
             self, response, self.FIELD_PARAM_MAPPINGS,
             ('qtype_status', 'is_requestable'))
-        self.save()
+        self.save(update_on_mturk=False)
 
         if sync_requests == True:
             self.sync_requests()
@@ -567,7 +570,7 @@ class QualificationRequest(ModelBase):
 
     id          = models.CharField(max_length=MAX_ID_LENGTH, primary_key=True)
     qtype       = models.ForeignKey(QualificationType, related_name='requests')
-    worker      = models.ForeignKey(MturkWorker)
+    worker      = models.ForeignKey(MturkWorker, related_name='requests')
     test        = models.TextField()
     answer      = models.TextField()
     submit_time = models.DateTimeField()
