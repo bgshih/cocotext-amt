@@ -123,16 +123,28 @@ class App extends Component {
     return false;
   }
 
+  isValidUrl(str){
+    var parse_url = new RegExp("^(http|https)://(polyverif.bgshi.me)/(image)/[0-9,]+$");
+    return parse_url.test(str)&&(str.charAt(str.length-1)!==",");
+  }
+
   handleChange(event) {
     this.setState({text: event.target.value});
   }
 
   handleSubmit(event) {
     var isJson = this.isJsonStr(this.state.text);
+    var isURL = this.isValidUrl(this.state.text);
 
-    if(isJson){
+    if(isJson || isURL){
       try{  
-        var obj = JSON.parse(this.state.text);
+        var obj;
+        if(isURL){
+          var jsonText = window.location.assign(this.state.text);
+          obj = JSON.parse(jsonText);
+        } else {
+          obj = JSON.parse(this.state.text);
+        }
         this.setState({
           jsonValue: obj,
           idx: 0,
@@ -141,11 +153,11 @@ class App extends Component {
         })
       } catch (e){
         alert ("Input should follow the Json data format listed here:" + 
-          "https://vision.cornell.edu/se3/coco-text-2/")
+          "https://vision.cornell.edu/se3/coco-text-2/"+"or valid image url");
       }
     } else {
       alert ("Input is not valid Json value. Check the accepted format here" + 
-          "https://vision.cornell.edu/se3/coco-text-2/")
+          "https://vision.cornell.edu/se3/coco-text-2/");
     }
     event.preventDefault();
   }
