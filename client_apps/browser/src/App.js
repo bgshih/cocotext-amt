@@ -123,9 +123,29 @@ class App extends Component {
     return false;
   }
 
-  isValidUrl(str){
-    var parse_url = new RegExp("^(http|https)://(polyverif.bgshi.me)/(image)/[0-9,]+$");
-    return parse_url.test(str)&&(str.charAt(str.length-1)!==",");
+  fetchFromUrl(str){
+    var parse_url = new RegExp("^(?:([A-Za-z]+):)?([0-9,]+)$");
+    var isValid = parse_url.test(str);
+    if(!isValid)
+      return null;
+    var res = parse_url.exec(str);
+    var type = res[1];
+    if(type!=="userID" && type!=="imgID")
+      return null;
+    var isUserID = type==="userID";
+    var numbers = res[2].split(",");
+    var url = "https://polyverif.bgshi.me/_annotation/"+(isUserID? "by-image-ids/":"by-worker-ids/");
+        for(var i=0;i<numbers.length;i++){
+        if(i===0){
+          url+=numbers[i];
+        } else{
+          url+=","+numbers[i];
+        }
+    }
+
+    var json = fetch.fetchUrl(url);
+
+    return json;
   }
 
   handleChange(event) {
@@ -133,17 +153,18 @@ class App extends Component {
   }
 
   handleSubmit(event) {
-    var isJson = this.isJsonStr(this.state.text);
-    var isURL = this.isValidUrl(this.state.text);
+    var str = this.state.text;
+    var isJson = this.isJsonStr(str);
+    var fetchURL = this.fetchFromUrl(str);
+    var isURL = fetchURL!==null;
 
     if(isJson || isURL){
       try{  
         var obj;
         if(isURL){
-          var jsonText = window.location.assign(this.state.text);
-          obj = JSON.parse(jsonText);
+          obj = JSON.parse(fetchURL);
         } else {
-          obj = JSON.parse(this.state.text);
+          obj = JSON.parse(str);
         }
         this.setState({
           jsonValue: obj,
@@ -153,7 +174,7 @@ class App extends Component {
         })
       } catch (e){
         alert ("Input should follow the Json data format listed here:" + 
-          "https://vision.cornell.edu/se3/coco-text-2/"+"or valid image url");
+          "https://vision.cornell.edu/se3/coco-text-2/"+"or valid image/user url (in the format as imgID/userID: 123,321)");
       }
     } else {
       alert ("Input is not valid Json value. Check the accepted format here" + 
@@ -163,15 +184,15 @@ class App extends Component {
   }
 
   handleClick(flag){
-    var currIdx = this.state.idx;
-    var isNext = flag===1;
-    var idx;
-    var temp = isNext? this.state.jsonValue.data.length-1:0;
-    
     if(this.state.imgId===-1){
       alert ("Please input your json data and click update first!");
       return;
     }
+
+    var currIdx = this.state.idx;
+    var isNext = flag===1;
+    var idx;
+    var temp = isNext? this.state.jsonValue.data.length-1:0;
     
     if(currIdx!==temp){
       idx = isNext? currIdx+1 : currIdx-1;
