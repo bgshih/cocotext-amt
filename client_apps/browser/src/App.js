@@ -134,7 +134,7 @@ class App extends Component {
       return null;
     var isUserID = type==="userID";
     var numbers = res[2].split(",");
-    var url = "https://polyverif.bgshi.me/_annotation/"+(isUserID? "by-image-ids/":"by-worker-ids/");
+    var url = "https://polyannot/_annotations/"+(isUserID? "by-image-id/":"by-worker-id/");
         for(var i=0;i<numbers.length;i++){
         if(i===0){
           url+=numbers[i];
@@ -221,6 +221,8 @@ class App extends Component {
 
         <div className="textArea">
           <h4> Please input your json data below: </h4>
+          <br/>
+          <p> valid input can either be json value (format:https://vision.cornell.edu/se3/coco-text-2/) or "userID:123,321" or "imgID:123,321"</p>
           <form onSubmit={this.handleSubmit}>
             <input type="text" value={this.state.value} onChange={this.handleChange} 
               style={{width: "50%", height: "135px", margin: "15px"}}/>
