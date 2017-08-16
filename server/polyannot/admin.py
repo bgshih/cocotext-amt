@@ -9,7 +9,7 @@ admin.site.register(Project, ProjectAdmin)
 
 
 class ProjectWorkerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'mturk_worker', 'project', 'admin')
+    list_display = ('id', 'mturk_worker', 'project', 'admin', 'num_submissions', 'average_duration')
     readonly_fields = ('id', 'mturk_worker', 'project')
 admin.site.register(ProjectWorker, ProjectWorkerAdmin)
 
@@ -17,6 +17,7 @@ admin.site.register(ProjectWorker, ProjectWorkerAdmin)
 class TaskAdmin(admin.ModelAdmin):
     list_display = ('id', 'hit', 'completed', 'project', 'image')
     readonly_fields = list_display
+    list_filter = ('completed',)
 admin.site.register(Task, TaskAdmin)
 
 

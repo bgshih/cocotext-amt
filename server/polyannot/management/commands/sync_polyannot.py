@@ -21,6 +21,15 @@ class Command(BaseCommand):
             help='Project to sync',
         )
 
+        parser.add_argument(
+            '--skip_completed',
+            action='store',
+            dest='skip_completed',
+            default=True,
+            type=bool,
+            help='Whether to skip completed tasks',
+        )
+
     def handle(self, *args, **options):
         project = Project.objects.get(name=options['project_name'])
-        project.sync()
+        project.sync(skip_completed_tasks=options['skip_completed'])

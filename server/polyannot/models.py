@@ -59,6 +59,14 @@ class ProjectWorker(ModelBase):
 
     admin = models.BooleanField(default=False)
 
+    def num_submissions(self):
+        return self.submissions.count()
+
+    def average_duration(self):
+        durations = [s.assignment.duration() for s in self.submissions.all()]
+        avg_duration = sum(durations, timedelta(0)) / len(durations)
+        return avg_duration
+
     def __str__(self):
         return str(self.id)
 
@@ -108,17 +116,17 @@ class Task(ModelBase):
 
     def sync(self, sync_submissions=True, sync_responses=True, create_contents=True):
         self.hit.sync(sync_assignments=True)
-
         if sync_submissions:
             self.sync_submissions(
                 sync_responses=sync_responses,
                 create_contents=create_contents
             )
-
         self.save()
 
     def save(self, *args, **kwargs):
-        # TODO: set self.completed
+        num_submissions_required = self.hit.max_assignments
+        if self.submissions.count() >= num_submissions_required:
+            self.completed = True
         super(Task, self).save(*args, **kwargs)
 
     def __str__(self):
