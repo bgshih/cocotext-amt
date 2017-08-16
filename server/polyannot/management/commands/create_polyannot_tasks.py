@@ -3,6 +3,7 @@ from tqdm import tqdm
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
+from django.db.models import Count, Case, When, IntegerField
 
 from common.models import MturkHitType, MturkHit, CocoTextImage
 from polyannot.models import Project, Task, Content
@@ -21,25 +22,25 @@ class Command(BaseCommand):
             dest='max_num_tasks',
             default=5,
             type=int,
-            help='Number of tasks to create',
+            help='Maximum number of tasks to create',
         )
 
         parser.add_argument(
-            '--start_image_idx',
+            '--num_v1_instances_range',
             action='store',
-            dest='start_image_idx',
+            dest='num_v1_instances_range',
+            nargs=2,
+            default=[0, 0],
+            help='Range of number of V1 instances.'
+        )
+
+        parser.add_argument(
+            '--start_idx_within_qset',
+            action='store',
+            dest='start_idx_within_qset',
+            type=int,
             default=0,
-            type=int,
-            help='Starting index of COCO-Text image',
-        )
-
-        parser.add_argument(
-            '--max_num_hints_per_image',
-            action='store',
-            dest='max_num_hints_per_image',
-            default=15,
-            type=int,
-            help='Maximum number of hints displayed on each image'
+            help='Starting index within the filtered query set'
         )
 
         parser.add_argument(
@@ -48,56 +49,61 @@ class Command(BaseCommand):
             dest='hit_type_slug',
             default='polyannot-main',
             type=str,
-            help='Slug name of HIT type'
+            help='Slug name of the HIT type to use'
         )
 
     def handle(self, *args, **options):
         project = Project.objects.get(name='Polyannot')
-
         hit_type = MturkHitType.objects.get(slug=options['hit_type_slug'])
 
         self.create_free_annotation_tasks(
             project         = project,
             hit_type        = hit_type,
-            start_image_idx = options['start_image_idx'],
-            max_num_tasks   = options['max_num_tasks']
+            start_idx_within_qset = options['start_idx_within_qset'],
+            max_num_tasks   = options['max_num_tasks'],
+            num_v1_instances_range = tuple([int(o) for o in options['num_v1_instances_range']]),
         )
 
     def create_free_annotation_tasks(self,
                                      project,
                                      hit_type,
-                                     start_image_idx,
-                                     max_num_tasks):
+                                     start_idx_within_qset,
+                                     max_num_tasks,
+                                     num_v1_instances_range):
         """Create free annotation tasks.
         No hints are given. Workers are asked to draw up to n polygons.
         """
-        max_num_tasks_possible = CocoTextImage.objects.count() - start_image_idx
-        num_tasks = min(max_num_tasks, max_num_tasks_possible)
-        image_idx = start_image_idx
 
-        if input('Going to create {} tasks, continue? (y/n)'.format(num_tasks)) != 'y':
+        min_num_v1_instances, max_num_v1_instances = num_v1_instances_range
+
+        # filter images by the number of v1 instances
+        qset = CocoTextImage.objects.annotate(
+            num_v1_instances=Count(
+                Case(
+                    When(text_instances__from_v1__exact=True, then=1),
+                    output_field=IntegerField()
+                )
+            )
+        )
+        qset = qset.filter(
+            num_v1_instances__gte=min_num_v1_instances,
+            num_v1_instances__lte=max_num_v1_instances
+        )
+        images_set = qset[start_idx_within_qset:start_idx_within_qset+max_num_tasks]
+
+        if input('Going to create {} tasks, continue? (y/n)'.format(images_set.count())) != 'y':
             print('Aborted')
             return
         
-        for i in range(max_num_tasks):
-            image = CocoTextImage.objects.order_by('id')[start_image_idx + i]
-
-            # create HIT
+        for i, image in enumerate(images_set):
             hit = MturkHit.objects.create(
                 hit_type        = hit_type,
                 max_assignments = 1,
-                lifetime        = timedelta(days=14),
+                lifetime        = timedelta(days=7),
                 question        = HIT_QUESTION,
             )
-
-            # create task
             task = Task.objects.create(
                 hit=hit,
                 project=project,
                 image=image
             )
-
-            # assign contents to task
-            for instance in image.text_instances.all():
-                content = instance.polyannot_content
-                content.tasks.add(task)

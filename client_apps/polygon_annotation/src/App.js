@@ -80,9 +80,13 @@ export class App extends Component {
   render() {
     return (
       <Grid> <Row> <Col>
-        <h2>Draw polygons around the words hinted by stars</h2>
+        <h2>Draw polygons to surround every word in this image</h2>
 
         <ListGroup>
+          {this.state.urlParams.assignmentId === 'ASSIGNMENT_ID_NOT_AVAILABLE' &&
+            <Alert bsStyle='danger'><b>WARNING!</b> You have not accepted this HIT yet. Your work will not be saved.</Alert>
+          }
+
           <ListGroupItem>
             <Toolbar setInfobar={this.setInfobar.bind(this)} />
           </ListGroupItem>

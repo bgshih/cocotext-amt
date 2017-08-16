@@ -1,4 +1,7 @@
+import * as eventTypes from './eventTypes';
+
 window.paper = require('paper');
+
 
 export class ChangeViewTool extends window.paper.Tool {
   constructor(setInfobar) {
@@ -144,7 +147,7 @@ export class EditPolygonTool extends window.paper.Tool {
     this.onMouseDown = this.handleMouseDown;
     this.onMouseDrag = this.handleMouseDrag;
     this.onMouseUp = this.handleMouseUp;
-    window.addEventListener('delete_polygon', this.handleDeleteActivePolygon.bind(this));
+    window.addEventListener(eventTypes.DELETE_POLYGON, this.handleDeleteActivePolygon.bind(this));
 
     this.setInfobar('info', 'Select a polygon to edit.');
   }
@@ -231,15 +234,17 @@ export class EditPolygonTool extends window.paper.Tool {
       tolerance: hitTolerance
     }
     const hitResult = this.activePolygon.hitTest(event.point, hitOptions);
-    if (hitResult.type === 'fill') {
-      // translate the polygon by mouse dragging
-      // do nothing here
-    } else if (hitResult.type === 'segment') {
-      const segment = hitResult.segment;
-      for (var i = 0; i < this.activePolygon.segments.length; i++) {
-        if (segment === this.activePolygon.segments[i]) {
-          this.activeSegment = segment;
-          break;
+    if (hitResult !== null) {
+      if (hitResult.type === 'fill') {
+        // translate the polygon by mouse dragging
+        // do nothing here
+      } else if (hitResult.type === 'segment') {
+        const segment = hitResult.segment;
+        for (var i = 0; i < this.activePolygon.segments.length; i++) {
+          if (segment === this.activePolygon.segments[i]) {
+            this.activeSegment = segment;
+            break;
+          }
         }
       }
     }

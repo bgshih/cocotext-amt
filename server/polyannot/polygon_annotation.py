@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 
-from common.models import MturkHit
+from common.models import MturkHit, MturkWorker, CocoTextImage, CocoTextInstance
 from common.utils import polygon_center
 
 
@@ -26,3 +26,47 @@ def get_task_data(request, hit_id):
         task_data['hints'].append(hint_pos)
 
     return JsonResponse(task_data)
+
+
+def get_annotations_by_worker_id(request, worker_id):
+    worker = MturkWorker.objects.get(id=worker_id).polyannot_worker
+    submissions = worker.submissions
+
+    imagesList = []
+
+    for submission in submissions.all():
+        image_id = submission.task.image.id
+        annotations = []
+        for response in submission.responses.all():
+            polygon = response.text_instance.polygon
+            annotations.append({'polygon': polygon})
+
+        imagesList.append({
+            'imageId': image_id,
+            'annotations': annotations
+        })
+
+    jsonResponse = {
+        'workerId': worker.id,
+        'imagesList': imagesList
+    }
+
+    return JsonResponse(jsonResponse)
+
+
+def get_annotations_by_image_ids(request, image_ids_str, include_v1=False):
+    image_ids = [id for id in image_ids_str.split(',')]
+
+    imagesList = []
+    for image_id in image_ids:
+        image = CocoTextImage.objects.get(id=image_id)
+        text_instances = image.text_instances.filter(from_v1=include_v1)
+        annotations = []
+        for text_instance in text_instances:
+            annotations.append({'polygon': text_instance.polygon})
+        imagesList.append({
+            'imageId': image_id,
+            'annotations': annotations
+        })
+    jsonResponse = {'imagesList': imagesList}
+    return JsonResponse(jsonResponse)

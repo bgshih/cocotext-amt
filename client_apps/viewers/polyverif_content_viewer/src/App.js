@@ -49,9 +49,9 @@ class App extends Component {
     const query = idStrList.join(',');
     var fetchUrl;
     if (this.state.objectType === CONTENT_TYPE) {
-      fetchUrl = constants.API_SERVER_URL + '/_content/' + query;
+      fetchUrl = constants.API_SERVER_URL + '/polyverif/_content/' + query;
     } else if (this.state.objectType === RESPONSE_TYPE) {
-      fetchUrl = constants.API_SERVER_URL + '/_response/' + query;
+      fetchUrl = constants.API_SERVER_URL + '/polyverif/_response/' + query;
     } else {
       console.error("Unknown type: " + this.state.objectType);
       return;

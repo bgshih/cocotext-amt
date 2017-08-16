@@ -38,7 +38,7 @@ class CocoTextImage(ModelBase):
     set      = models.CharField(max_length=3, choices=SUBSET_CHOICES)
 
     def num_instances(self):
-        return self.instances.count()
+        return self.text_instances.count()
 
     def __str__(self):
         return str(self.id)

@@ -4,6 +4,8 @@ import { ButtonToolbar, ButtonGroup, Button,
          Glyphicon, Tooltip, OverlayTrigger, Modal } from 'react-bootstrap';
 import {ChangeViewTool, DrawPolygonTool, EditPolygonTool} from './Tools';
 import * as eventTypes from './eventTypes';
+import InstructionModal from './instructionModal';
+import SubmitConfirmModal from './submitConfirmModal';
 
 window.paper = require('paper');
 
@@ -50,6 +52,7 @@ export class Toolbar extends Component {
       activeTool: 'default',
       showInstructionModal: false,
       showResetWarningModal: false,
+      remainingSubmitTime: 20,
     }
   }
 
@@ -96,6 +99,25 @@ export class Toolbar extends Component {
           break;
       }
     });
+
+    var timerId;
+    timerId = setInterval(
+      () => {
+        if (this.state.remainingSubmitTime > 0) {
+          this.setState({
+            remainingSubmitTime: this.state.remainingSubmitTime - 1
+          });
+        } else {
+          // penalty time up
+          this.setState({
+            pausePenalty: false
+          });
+          // clear timer
+          clearInterval(timerId);
+        }
+      },
+      1000
+    );
   }
 
   handleHotKeys(charCode) {
@@ -172,49 +194,49 @@ export class Toolbar extends Component {
     );
 
     const instructionModal = (
-      <Modal show={ this.state.showInstructionModal }
-             onHide={ () => this.setState({showInstructionModal: false})}
-             bsSize='large'>
-        <Modal.Header closeButton>
-          <Modal.Title>Annotation Instructions</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          <h3>What should I do?</h3>
-          <p></p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={ () => this.setState({showInstructionModal: false}) }>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    );
+      <InstructionModal
+        show={this.state.showInstructionModal}
+        upToNPolygons={5}
+        hideClicked={() => this.setState({'showInstructionModal': false})}
+        pausePenalty={false}
+        pausePenaltyCountdown={0} />
+    )
 
     const submitConfirmModal = (
-      <Modal show={this.state.showSubmitConfirmModal}
-             onHide={() => this.setState({showSubmitConfirmModal: false})}>
-        <Modal.Header closeButton>
-          <Modal.Title>Ready to Submit?</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          <p>(Show some statistics here)</p>
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button onClick={ () => this.setState({showSubmitConfirmModal: false}) }>
-            Go Back
-          </Button>
-          <Button bsStyle="primary"
-                  onClick={ () => {
-                    this.setState({showSubmitConfirmModal: false});
-                    window.dispatchEvent(new Event(eventTypes.SUBMIT_ANNOTATIONS)); } }>
-            Submit
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <SubmitConfirmModal
+        show={this.state.showSubmitConfirmModal}
+        onHide={() => this.setState({showSubmitConfirmModal: false})}
+        remainingSubmitTime={this.state.remainingSubmitTime}
+        submitClicked={() => {
+          this.setState({showSubmitConfirmModal: false});
+          window.dispatchEvent(new Event(eventTypes.SUBMIT_ANNOTATIONS));
+        }} />
     );
+
+    // const submitConfirmModal = (
+    //   <Modal show={this.state.showSubmitConfirmModal}
+    //          onHide={() => this.setState({showSubmitConfirmModal: false})}>
+    //     <Modal.Header closeButton>
+    //       <Modal.Title>Ready to Submit?</Modal.Title>
+    //     </Modal.Header>
+
+    //     <Modal.Body>
+    //       <p>(Show some statistics here)</p>
+    //     </Modal.Body>
+
+    //     <Modal.Footer>
+    //       <Button onClick={ () => this.setState({showSubmitConfirmModal: false}) }>
+    //         Go Back
+    //       </Button>
+    //       <Button bsStyle="primary"
+    //               onClick={ () => {
+    //                 this.setState({showSubmitConfirmModal: false});
+    //                 window.dispatchEvent(new Event(eventTypes.SUBMIT_ANNOTATIONS)); } }>
+    //         Submit
+    //       </Button>
+    //     </Modal.Footer>
+    //   </Modal>
+    // );
 
     return (
       <div>
@@ -253,9 +275,11 @@ export class Toolbar extends Component {
           </ButtonGroup>
 
           <ButtonGroup>
+            {/*
             <ButtonWithTooltip onClick={this.toggleHints.bind(this)}
                                tooltipText='Toggle Hints (h)'
                                glyph='star-empty' />
+                               */}
             <ButtonWithTooltip onClick={this.instructions.bind(this)}
                                tooltipText='Instructions'
                                glyph='info-sign' />

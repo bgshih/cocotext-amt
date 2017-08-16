@@ -40,8 +40,8 @@ export class Canvas extends Component {
   componentWillUpdate(nextProps, nextState) {
     if (this.props.imageUrl !== nextProps.imageUrl) {
       this.loadImage(nextProps.imageUrl);
-      this.drawHints(nextProps.hints);
-      this.drawStaticPolygons(nextProps.staticPolygons);
+      // this.drawHints(nextProps.hints);
+      // this.drawStaticPolygons(nextProps.staticPolygons);
     }
   }
 
@@ -152,6 +152,10 @@ export class Canvas extends Component {
   resetAnnotations() {
     this.annotationShapeLayer.removeChildren();
     this.zoomToFit();
+  }
+
+  deleteSelectedPolygon() {
+
   }
 
   zoomToFit() {
