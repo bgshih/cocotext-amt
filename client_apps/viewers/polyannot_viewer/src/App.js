@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import './App.css';
-import { Grid, FormGroup, FormControl, Button, ButtonGroup, Alert, Pagination, Panel } from 'react-bootstrap';
+import { Grid, FormGroup, FormControl, Button, ButtonGroup, Alert } from 'react-bootstrap';
 import { MenuItem, DropdownButton } from 'react-bootstrap';
 
 import {MultiImagesViewer} from './MultiImagesViewer';
@@ -83,7 +83,7 @@ class App extends Component {
   render() {
     const placeholderTextDict = {
       QUERY_BY_IMAGE_IDS: "Input a list of image IDs in JSON format",
-      QUERY_BY_WORKER_ID: "Input a of worker ID in JSON list format",
+      QUERY_BY_WORKER_ID: "Input worker ID",
       QUERY_BY_TASK_IDS: "Input a list of task IDs in JSON format"
     }
 
@@ -118,7 +118,7 @@ class App extends Component {
                         onClick={() => { this.setState({queryMode: QUERY_BY_TASK_IDS}); }}>
                 Task IDs
               </MenuItem>
-          </DropdownButton>
+            </DropdownButton>
           </ButtonGroup>
 
           { this.state.invalidJson === true &&

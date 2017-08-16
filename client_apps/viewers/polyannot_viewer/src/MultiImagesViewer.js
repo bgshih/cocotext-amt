@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
-import { Grid, FormGroup, FormControl, Button, ButtonGroup, Alert, Pagination, Panel } from 'react-bootstrap';
+import { Pagination, Panel } from 'react-bootstrap';
 
 
 export class MultiImagesViewer extends Component {
@@ -24,6 +23,8 @@ export class MultiImagesViewer extends Component {
         newActiveIndex = Math.min(this.state.activeIndex + 1, this.props.imagesList.length - 1);
         this.setState({
           activeIndex: newActiveIndex});
+        break;
+      default:
         break;
     }
   }
