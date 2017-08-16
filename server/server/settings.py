@@ -28,9 +28,6 @@ DEBUG = False
 # Use MTurk development sandbox
 MTURK_SANDBOX = DEBUG
 
-# TODO: remove this line
-DEBUG = True
-
 # Use a separate database in development
 # DATABASE_NAME = 'cocotext_v2_sandbox' if MTURK_SANDBOX == True else \
 #                 'cocotext_v2_amt'
