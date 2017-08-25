@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { Pagination, Panel } from 'react-bootstrap';
 
+import * as constants from './constants';
+
 
 export class MultiImagesViewer extends Component {
   constructor(props) {
@@ -8,12 +10,20 @@ export class MultiImagesViewer extends Component {
     this.state = {
       activeIndex: 0
     }
+    this.handleKeyDown = this.handleKeyDown.bind(this);
   }
 
-  handleKeyPress(keyCode) {
-    console.log(keyCode);
+  componentDidMount() {
+    window.addEventListener("keydown", this.handleKeyDown);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("keydown", this.handleKeyDown);
+  }
+
+  handleKeyDown(e) {
     var newActiveIndex;
-    switch (keyCode) {
+    switch (e.keyCode) {
       case 37: // left arrow
         newActiveIndex = Math.max(this.state.activeIndex - 1, 0);
         this.setState({
@@ -24,16 +34,36 @@ export class MultiImagesViewer extends Component {
         this.setState({
           activeIndex: newActiveIndex});
         break;
+      case 49: // digit 1
+      case 50: // digit 2
+      case 51: // digit 3
+      case 52: // digit 4
+        const imageAndAnnotations = this.getActiveImageAndAnnotations();
+        if (imageAndAnnotations !== null) {
+          const mark = {
+            49: 'C', // correct
+            50: 'W', // wrong
+            51: 'R', // revision-or-further-work
+            52: 'U', // unchecked
+          }[e.keyCode]
+          this.props.setAdminMark(this.state.activeIndex, mark);
+        }
+        break;
       default:
         break;
     }
   }
 
+  getActiveImageAndAnnotations() {
+    const imageAndAnnotations = this.state.activeIndex >= 0 && this.state.activeIndex < this.props.imagesList.length ? this.props.imagesList[this.state.activeIndex] : null;
+    return imageAndAnnotations;
+  }
+
   render() {
-    const imageAndAnnotations = this.state.activeIndex >= 0 && this.state.activeIndex < this.props.imagesList.length ?
-      this.props.imagesList[this.state.activeIndex] : null;
+    const imageAndAnnotations = this.getActiveImageAndAnnotations();
     const imageId = imageAndAnnotations === null ? null : imageAndAnnotations.imageId;
     const annotations = imageAndAnnotations === null ? null : imageAndAnnotations.annotations;
+    const adminMark = imageAndAnnotations === null ? null : imageAndAnnotations.adminMark;
 
     return (
       <div>
@@ -42,7 +72,7 @@ export class MultiImagesViewer extends Component {
           canvasHeight={this.props.canvasHeight}
           imageId={imageId}
           annotations={annotations}
-          onKeyDown={(e) => {this.handleKeyPress(e.keyCode)} }
+          adminMark={adminMark}
         />
         <Pagination
           prev next first last ellipsis boundaryLinks
@@ -64,10 +94,8 @@ class ImageViewer extends Component {
     if (this.props.canvasWidth !== prevProps.canvasWidth ||
         this.props.canvasHeight !== prevProps.canvasHeight ||
         this.props.imageId !== prevProps.imageId) {
-      
       this.updateCanvas();
     }
-    // this.updateCanvas();
   }
 
   updateCanvas() {
@@ -82,7 +110,7 @@ class ImageViewer extends Component {
 
     // draw image and annotations
     const image = new Image();
-    const imageUrlTemplate = 'https://s3.amazonaws.com/cocotext-images/train2014/COCO_train2014_';
+    const imageUrlTemplate = constants.COCO_IMAGE_URL_PREFIX;
     const leadingZeros = '0'.repeat(12 - this.props.imageId.toString().length);
     const imageUrl = imageUrlTemplate + leadingZeros + this.props.imageId.toString() + '.jpg';
     image.onload = () => {
@@ -115,7 +143,7 @@ class ImageViewer extends Component {
           }
         }
         ctx.closePath();
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 3;
         ctx.strokeStyle = 'rgba(0, 255, 0, 0.9)';
         ctx.stroke();
         ctx.fillStyle = 'rgba(255, 255, 255, 0.0)';
@@ -126,9 +154,20 @@ class ImageViewer extends Component {
   }
 
   render() {
+    const panelColorsDict = {
+      'U': 'white', // unmarked
+      'C': '#5cb85c', // marked as correct
+      'W': '#d9534f', // marked as wrong
+      'R': '#f4d942' // marked as need-revision-or-more-work
+    }
+    const panelStyle = {
+      backgroundColor: panelColorsDict[this.props.adminMark]
+    }
+
     return (
       <Panel header={ "ID: " + this.props.imageId }
-            className="cardPanel">
+             style={ panelStyle }
+             className="cardPanel">
         <canvas ref="canvas"
                 width={ this.props.canvasWidth }
                 height={ this.props.canvasHeight }

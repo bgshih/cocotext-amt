@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import './App.css';
 import { Grid, FormGroup, FormControl, Button, ButtonGroup, Alert } from 'react-bootstrap';
 import { MenuItem, DropdownButton } from 'react-bootstrap';
+import update from 'immutability-helper';
 
 import {MultiImagesViewer} from './MultiImagesViewer';
 
@@ -80,6 +81,24 @@ class App extends Component {
       });
   }
 
+  submitAdminMarks() {
+    var adminMarks = {}
+    for (var imageAndAnnotation of this.state.imagesList) {
+      const submissionId = imageAndAnnotation.submissionId;
+      const mark = imageAndAnnotation.adminMark;
+      adminMarks[submissionId] = mark;
+    }
+    const fetchUrl = API_SERVER_URL + '/polyannot/_annotations/set_admin_marks/';
+    fetch(fetchUrl, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',    
+      },
+      body: JSON.stringify(adminMarks)
+    });
+  }
+
   render() {
     const placeholderTextDict = {
       QUERY_BY_IMAGE_IDS: "Input a list of image IDs in JSON format",
@@ -121,6 +140,13 @@ class App extends Component {
             </DropdownButton>
           </ButtonGroup>
 
+          <ButtonGroup>
+            <Button className="btn btn-primary"
+                    onClick={() => {this.submitAdminMarks()}}>
+              Submit Admin Marks
+            </Button>
+          </ButtonGroup>
+
           { this.state.invalidJson === true &&
             <Alert bsStyle='danger'>Invalid JSON</Alert>
           }
@@ -128,8 +154,12 @@ class App extends Component {
 
         <MultiImagesViewer
           imagesList={this.state.imagesList}
-          canvasWidth={800}
-          canvasHeight={600} />
+          canvasWidth={1100}
+          canvasHeight={1000}
+          setAdminMark={(idx, mark) => {
+            const newImagesList = update(this.state.imagesList, {[idx]: {adminMark: {$set: mark}}});
+            this.setState({imagesList: newImagesList});
+          }} />
       </Grid>
     );
   }

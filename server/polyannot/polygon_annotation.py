@@ -1,9 +1,14 @@
+import json
+import codecs
+
 from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 
 from common.models import MturkHit, MturkWorker, CocoTextImage, CocoTextInstance
 from common.utils import polygon_center
+from polyannot.models import Submission
 
 
 def get_task_data(request, hit_id):
@@ -42,19 +47,25 @@ def get_annotations_by_worker_id(request, worker_id):
             annotations.append({'polygon': polygon})
 
         imagesList.append({
+            'submissionId': submission.id,
             'imageId': image_id,
-            'annotations': annotations
+            'annotations': annotations,
+            'adminMark': submission.admin_mark,
         })
+
+    # sort image list by image id
+    sortedLmagesList = sorted(imagesList, key=lambda item: int(item['imageId']))
 
     jsonResponse = {
         'workerId': worker.id,
-        'imagesList': imagesList
+        'imagesList': sortedLmagesList
     }
 
     return JsonResponse(jsonResponse)
 
 
 def get_annotations_by_image_ids(request, image_ids_str, include_v1=False):
+    raise NotImplementedError('Have bugs. Do not use')
     image_ids = [id for id in image_ids_str.split(',')]
 
     imagesList = []
@@ -66,7 +77,20 @@ def get_annotations_by_image_ids(request, image_ids_str, include_v1=False):
             annotations.append({'polygon': text_instance.polygon})
         imagesList.append({
             'imageId': image_id,
-            'annotations': annotations
+            'annotations': annotations,
+            'adminMark': 'U' # FIXME
         })
     jsonResponse = {'imagesList': imagesList}
     return JsonResponse(jsonResponse)
+
+
+@csrf_exempt
+def set_admin_marks(request):
+    marks = json.loads(codecs.decode(request.body))
+
+    for key, value in marks.items():
+        submission = Submission.objects.get(id=int(key))
+        submission.admin_mark = value
+        submission.save()
+
+    return JsonResponse({})

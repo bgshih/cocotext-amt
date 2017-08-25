@@ -136,6 +136,13 @@ class Task(ModelBase):
 class Submission(ModelBase):
     """Extends MturkAssignment with relationships to task, worker, etc."""
 
+    ADMIN_MARK_TYPES = (
+        ('U', 'Unchecked'),  # not checked yet
+        ('C', 'Correct'),    # marked as correct
+        ('W', 'Wrong'), # marked as wrong, should be rejected and reworked
+        ('R', 'RevisionOrFurtherWork'), # needs revision or further work
+    )
+
     assignment = models.OneToOneField(
         MturkAssignment,
         related_name='polyannot_submission'
@@ -152,6 +159,11 @@ class Submission(ModelBase):
     )
 
     answer = JSONField(null=True)
+
+    admin_mark = models.CharField(
+        max_length=1,
+        choices=ADMIN_MARK_TYPES,
+        default='U')
 
     def sync_responses(self, create_contents=True):
         # the answer must be list of polygons, each represented by a list of points
