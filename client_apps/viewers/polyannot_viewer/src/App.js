@@ -96,6 +96,10 @@ class App extends Component {
         'Content-Type': 'application/json',    
       },
       body: JSON.stringify(adminMarks)
+    })
+    .then(() => {alert("Submitted");})
+    .catch((error) => {
+      console.warn(error);
     });
   }
 

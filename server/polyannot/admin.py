@@ -9,7 +9,7 @@ admin.site.register(Project, ProjectAdmin)
 
 
 class ProjectWorkerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'mturk_worker', 'project', 'admin', 'num_submissions', 'average_duration')
+    list_display = ('id', 'mturk_worker', 'project', 'admin', 'num_submissions', 'average_duration', 'admin_accuracy')
     readonly_fields = ('id', 'mturk_worker', 'project')
 admin.site.register(ProjectWorker, ProjectWorkerAdmin)
 

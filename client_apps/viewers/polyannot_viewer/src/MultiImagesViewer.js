@@ -21,6 +21,14 @@ export class MultiImagesViewer extends Component {
     window.removeEventListener("keydown", this.handleKeyDown);
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    if (prevProps.imagesList.length !== this.props.imagesList.length) {
+      this.setState({
+        activeIndex: 0
+      });
+    }
+  }
+
   handleKeyDown(e) {
     var newActiveIndex;
     switch (e.keyCode) {

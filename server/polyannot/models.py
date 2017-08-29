@@ -35,8 +35,12 @@ class Project(ModelBase):
                 self.tasks.all()
         print('[1/2] Synching tasks, submissions, responses, and workers')
         print('Synching {} tasks'.format(tasks.count()))
+        num_completed = 0
         for task in tqdm(tasks):
             task.sync()
+            if task.completed:
+                num_completed += 1
+        print('{} tasks completed'.format(num_completed))
         
         # print('[2/2] Synching contents')
 
@@ -66,6 +70,16 @@ class ProjectWorker(ModelBase):
         durations = [s.assignment.duration() for s in self.submissions.all()]
         avg_duration = sum(durations, timedelta(0)) / len(durations)
         return avg_duration
+
+    def admin_accuracy(self, return_str=True):
+        num_correct = self.submissions.filter(admin_mark='C').count()
+        num_wrong = self.submissions.filter(admin_mark='W').count()
+        num_total = (num_wrong + num_correct)
+        if return_str:
+            accuracy = 'N/A' if num_total == 0 else '{:.1f}% (among {})'.format(100 * num_correct / num_total, num_total)
+        else:
+            accuracy = num_correct / num_total
+        return accuracy
 
     def __str__(self):
         return str(self.id)
