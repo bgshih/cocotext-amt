@@ -282,7 +282,7 @@ class Content(ModelBase):
     )
 
     # number of same responses to reach consensus
-    consensus_num = models.PositiveSmallIntegerField(default=3)
+    consensus_num = models.PositiveSmallIntegerField(default=2)
 
     status = models.CharField(
         max_length=1,
@@ -337,6 +337,24 @@ class Content(ModelBase):
                 return 'W'
             else:
                 return 'D'
+        
+        # get verifications to this content
+        verifications = [res.verification for res in self.responses.all()]
+        if len(verifications) < self.consensus_num:
+            # not enough responses received
+            return None
+        else:
+            num_correct = len([v == 'C' for v in verifications])
+            num_wrong = len([v == 'W' for v in verifications])
+            assert(num_correct < self.consensus_num or num_wrong < self.consensus_num)
+            if num_correct >= self.consensus_num:
+                return 'C'
+            elif num_wrong >= self.consensus_num:
+                return 'W'
+            else:
+                # in dispute, usually it's one correct and wrong response
+                return 'D'
+
 
     # groundtruth verification. None if not a sentinel
     gt_verification = models.CharField(

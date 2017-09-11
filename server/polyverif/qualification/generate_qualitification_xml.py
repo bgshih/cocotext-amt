@@ -37,7 +37,7 @@ QUESTION_TEMPALTE = \
           <Type>image</Type>
           <SubType>png</SubType>
         </MimeType>
-        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions/q{0}.png</DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions_v2/q{0}.png</DataURL>
         <AltText>Question-{0}</AltText>
       </Binary>
     </QuestionContent>
@@ -81,7 +81,8 @@ QUESTION_ANSWER_TEMPLATE = \
   </Question>
 """
 
-GROUNDTRUTH_ANSWERS = ['C', 'W', 'W', 'W', 'W', 'C', 'C', 'W', 'W', 'C']
+# GROUNDTRUTH_ANSWERS = ['C', 'W', 'W', 'W', 'W', 'C', 'C', 'W', 'W', 'C'] # v1
+GROUNDTRUTH_ANSWERS = ['C', 'W', 'C', 'W', 'W', 'C', 'W', 'W', 'C', 'C']
 
 def generate_test():
     questions_str = '\n\n'.join([QUESTION_TEMPALTE.format(i+1) for i in range(10)])

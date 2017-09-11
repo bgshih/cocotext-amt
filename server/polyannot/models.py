@@ -78,7 +78,7 @@ class ProjectWorker(ModelBase):
         if return_str:
             accuracy = 'N/A' if num_total == 0 else '{:.1f}% (among {})'.format(100 * num_correct / num_total, num_total)
         else:
-            accuracy = num_correct / num_total
+            accuracy = 0.0 if num_total == 0 else num_correct / num_total
         return accuracy
 
     def __str__(self):

@@ -20,7 +20,7 @@
 <Question>
     <QuestionIdentifier>Q3</QuestionIdentifier>
     <AnswerOption>
-      <SelectionIdentifier>C</SelectionIdentifier>
+      <SelectionIdentifier>W</SelectionIdentifier>
       <AnswerScore>10</AnswerScore>
     </AnswerOption>
   </Question>
@@ -56,7 +56,7 @@
 <Question>
     <QuestionIdentifier>Q7</QuestionIdentifier>
     <AnswerOption>
-      <SelectionIdentifier>W</SelectionIdentifier>
+      <SelectionIdentifier>C</SelectionIdentifier>
       <AnswerScore>10</AnswerScore>
     </AnswerOption>
   </Question>
@@ -74,7 +74,7 @@
 <Question>
     <QuestionIdentifier>Q9</QuestionIdentifier>
     <AnswerOption>
-      <SelectionIdentifier>C</SelectionIdentifier>
+      <SelectionIdentifier>W</SelectionIdentifier>
       <AnswerScore>10</AnswerScore>
     </AnswerOption>
   </Question>

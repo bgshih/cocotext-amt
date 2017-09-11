@@ -19,9 +19,9 @@ const InstructionModal = ({ show, upToNPolygons, hideClicked, pausePenalty, paus
 
       <p>We are collecting a dataset of text in natural images. In this dataset, each word should be annotated by a polygon that <b>tightly surrounds</b> it. Use the tool we provide to draw polygons around words you could find. You can stop annotating more when you have annotated <b>{upToNPolygons} words</b> in every image.</p>
 
-      <p><b>Every polygon should surround only one word. Do NOT draw a polygon to surround multiple.</b><p>
+      <p><b>Every polygon should surround only one word. Do NOT draw a polygon to surround multiple.</b></p>
 
-      <p>We define "word" a sequence of characters without blank space. Words such as "CocaCola" are considered one rather than two. Some words have large character space, which should not be interpreted as blank space symbols.</p>
+      <p>We define "word" a sequence of characters without blank space. Words such as "CocaCola", "www.google.com" are considered one word rather than two. Some words have large character space, which should not be interpreted as blank space symbols.</p>
 
       <p>Check the information bar at the bottom of the image for the interactive instructions of tool usages.</p>
 

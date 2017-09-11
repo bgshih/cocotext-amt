@@ -12,11 +12,11 @@ class Command(BaseCommand):
         pass
 
     def create_polyannot_hit_type(self):
-        qtype_test = QualificationType.objects.get(slug='annot-verification-test')
+        qtype_test = QualificationType.objects.get(slug='annot-verification-test-v2')
         qtype_admin_level = QualificationType.objects.get(slug='polyannot-admin-level')
 
         hit_type, created = MturkHitType.objects.get_or_create(
-            slug                = 'polyannot-20170826-2',
+            slug                = 'polyannot-20170828-2',
             auto_approval_delay = timedelta(days=2),
             assignment_duration = timedelta(minutes=15),
             reward              = '0.08',
@@ -34,7 +34,7 @@ class Command(BaseCommand):
                     'QualificationTypeId': qtype_admin_level.id,
                     'Comparator': 'GreaterThanOrEqualTo',
                     'IntegerValues': [0,],
-                    'RequiredToPreview': True
+                    'RequiredToPreview': False
                 },
             ]
         )

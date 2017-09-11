@@ -22,8 +22,9 @@ admin.site.register(Task, TaskAdmin)
 
 
 class SubmissionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'assignment', 'task', 'project_worker')
+    list_display = ('id', 'assignment', 'task', 'project_worker', 'admin_mark')
     readonly_fields = ('id', 'assignment', 'task', 'project_worker', 'answer')
+    list_filter = ('admin_mark',)
 admin.site.register(Submission, SubmissionAdmin)
 
 
