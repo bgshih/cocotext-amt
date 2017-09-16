@@ -11,6 +11,7 @@ const API_SERVER_URL = window.location.origin;
 
 const QUERY_BY_IMAGE_IDS = 'QUERY_BY_IMAGE_IDS';
 const QUERY_BY_WORKER_ID = 'QUERY_BY_WORKER_ID';
+const QUERY_UNVERIFIED = 'QUERY_UNVERIFIED';
 const QUERY_BY_TASK_IDS = 'QUERY_BY_TASK_IDS';
 
 
@@ -61,6 +62,9 @@ class App extends Component {
         query = taskIdStrList.join(',');
         fetchUrl = API_SERVER_URL + '/polyannot/_annotations/by_task_ids/' + query;
         break;
+      case QUERY_UNVERIFIED:
+        fetchUrl = API_SERVER_URL + '/polyannot/_annotations/unverified/';
+        break;
       default:
         console.error('Unknown query mode: ' + this.state.queryMode);
         break;
@@ -106,6 +110,7 @@ class App extends Component {
   render() {
     const placeholderTextDict = {
       QUERY_BY_IMAGE_IDS: "Input a list of image IDs in JSON format",
+      QUERY_UNVERIFIED: "Leave blank",
       QUERY_BY_WORKER_ID: "Input worker ID",
       QUERY_BY_TASK_IDS: "Input a list of task IDs in JSON format"
     }
@@ -140,6 +145,10 @@ class App extends Component {
               <MenuItem eventKey="3"
                         onClick={() => { this.setState({queryMode: QUERY_BY_TASK_IDS}); }}>
                 Task IDs
+              </MenuItem>
+              <MenuItem eventKey="4"
+                        onClick={() => { this.setState({queryMode: QUERY_UNVERIFIED}); }}>
+                Unverified (250 max)
               </MenuItem>
             </DropdownButton>
           </ButtonGroup>

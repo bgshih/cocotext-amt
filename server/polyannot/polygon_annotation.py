@@ -33,13 +33,13 @@ def get_task_data(request, hit_id):
     return JsonResponse(task_data)
 
 
-def get_annotations_by_worker_id(request, worker_id):
+def get_annotations_by_worker_id(request, worker_id, max_num=200):
     worker = MturkWorker.objects.get(id=worker_id).polyannot_worker
     submissions = worker.submissions
 
     imagesList = []
 
-    for submission in submissions.all():
+    for submission in submissions.filter(admin_mark='U')[:max_num]:
         image_id = submission.task.image.id
         annotations = []
         for response in submission.responses.all():
@@ -61,6 +61,35 @@ def get_annotations_by_worker_id(request, worker_id):
         'imagesList': sortedLmagesList
     }
 
+    return JsonResponse(jsonResponse)
+
+
+def get_unverified_annotations(request, max_num=200):
+    images_list = []
+    unverified_submissions = Submission.objects.filter(admin_mark='U')[:max_num]
+
+    for submission in unverified_submissions:
+        image_id = submission.task.image.id
+        annotations = []
+        for response in submission.responses.all():
+            polygon = response.text_instance.polygon
+            annotations.append({'polygon': polygon})
+
+        images_list.append({
+            'submissionId': submission.id,
+            'imageId': image_id,
+            'annotations': annotations,
+            'adminMark': submission.admin_mark,
+        })
+
+    print('Num of unverified: {}'.format(len(images_list)))
+    
+    # sort image list by image id
+    # sorted_images_list = sorted(images_list, key=lambda item: int(item['imageId']))[:max_num]
+
+    jsonResponse = {
+        'imagesList': images_list
+    }
     return JsonResponse(jsonResponse)
 
 
