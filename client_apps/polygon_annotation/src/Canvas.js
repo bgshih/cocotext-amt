@@ -116,6 +116,8 @@ export class Canvas extends Component {
   submitAnnotations() {
     const urlParams = this.props.urlParams;
 
+    var annotationData = {}
+
     // collect polygon data
     var polygonData = [];
     for (const polygon of this.annotationShapeLayer.children) {
@@ -129,6 +131,9 @@ export class Canvas extends Component {
       polygonData.push(polygonPoints);
     }
 
+    annotationData["polygons"] = polygonData;
+    annotationData["hasRemainingText"] = this.props.hasRemainingText;
+
     var form = document.createElement("form");
     form.method = 'POST';
     form.action = urlParams.turkSubmitTo + '/mturk/externalSubmit';
@@ -139,7 +144,9 @@ export class Canvas extends Component {
       form.appendChild(field);
     }
     appendField('assignmentId', urlParams.assignmentId);
-    appendField('answerData', JSON.stringify(polygonData));
+    appendField('answerData', JSON.stringify(annotationData));
+
+    console.log(JSON.stringify(annotationData));
 
     document.body.appendChild(form);
     form.submit();

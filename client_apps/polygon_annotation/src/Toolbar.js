@@ -52,7 +52,7 @@ export class Toolbar extends Component {
       activeTool: 'default',
       showInstructionModal: false,
       showResetWarningModal: false,
-      remainingSubmitTime: 20,
+      remainingSubmitTime: 20
     }
   }
 
@@ -203,40 +203,16 @@ export class Toolbar extends Component {
     )
 
     const submitConfirmModal = (
-      <SubmitConfirmModal
-        show={this.state.showSubmitConfirmModal}
-        onHide={() => this.setState({showSubmitConfirmModal: false})}
-        remainingSubmitTime={this.state.remainingSubmitTime}
-        submitClicked={() => {
-          this.setState({showSubmitConfirmModal: false});
-          window.dispatchEvent(new Event(eventTypes.SUBMIT_ANNOTATIONS));
-        }} />
+      <SubmitConfirmModal show={this.state.showSubmitConfirmModal}
+                          onHide={() => this.setState({showSubmitConfirmModal: false})}
+                          remainingSubmitTime={this.state.remainingSubmitTime}
+                          submitClicked={() => {
+                            this.setState({showSubmitConfirmModal: false});
+                            window.dispatchEvent(new Event(eventTypes.SUBMIT_ANNOTATIONS));
+                          }}
+                          hasRemainingText={ this.props.hasRemainingText }
+                          onSetHasRemainingText={ this.props.onSetHasRemainingText } />
     );
-
-    // const submitConfirmModal = (
-    //   <Modal show={this.state.showSubmitConfirmModal}
-    //          onHide={() => this.setState({showSubmitConfirmModal: false})}>
-    //     <Modal.Header closeButton>
-    //       <Modal.Title>Ready to Submit?</Modal.Title>
-    //     </Modal.Header>
-
-    //     <Modal.Body>
-    //       <p>(Show some statistics here)</p>
-    //     </Modal.Body>
-
-    //     <Modal.Footer>
-    //       <Button onClick={ () => this.setState({showSubmitConfirmModal: false}) }>
-    //         Go Back
-    //       </Button>
-    //       <Button bsStyle="primary"
-    //               onClick={ () => {
-    //                 this.setState({showSubmitConfirmModal: false});
-    //                 window.dispatchEvent(new Event(eventTypes.SUBMIT_ANNOTATIONS)); } }>
-    //         Submit
-    //       </Button>
-    //     </Modal.Footer>
-    //   </Modal>
-    // );
 
     return (
       <div>

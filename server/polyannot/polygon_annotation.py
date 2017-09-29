@@ -33,13 +33,16 @@ def get_task_data(request, hit_id):
     return JsonResponse(task_data)
 
 
-def get_annotations_by_worker_id(request, worker_id, max_num=200):
+def get_annotations_by_worker_id(request, worker_id, only_unverified=False, max_num=200):
     worker = MturkWorker.objects.get(id=worker_id).polyannot_worker
-    submissions = worker.submissions
+    if only_unverified:
+        submissions = worker.submissions.filter(admin_mark='U')
+    else:
+        submissions = worker.submissions.all()
 
     imagesList = []
 
-    for submission in submissions.filter(admin_mark='U')[:max_num]:
+    for submission in submissions[:max_num]:
         image_id = submission.task.image.id
         annotations = []
         for response in submission.responses.all():

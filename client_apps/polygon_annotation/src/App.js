@@ -15,7 +15,8 @@ export class App extends Component {
       imageUrl: null,
       hints: [],
       existingPolygons: [],
-      urlParams: {}
+      urlParams: {},
+      hasRemainingText: false,
     }
   }
 
@@ -88,16 +89,19 @@ export class App extends Component {
           }
 
           <ListGroupItem>
-            <Toolbar setInfobar={this.setInfobar.bind(this)} />
+            <Toolbar setInfobar={this.setInfobar.bind(this)}
+                     hasRemainingText={this.state.hasRemainingText}
+                     onSetHasRemainingText={(has) => { this.setState({hasRemainingText: has}); }} />
           </ListGroupItem>
 
           <ListGroupItem>
-            <Canvas width="800"
-                    height="600"
+            <Canvas width="1000"
+                    height="800"
                     imageUrl={this.state.imageUrl}
                     hints={this.state.hints}
                     staticPolygons={this.state.staticPolygons}
-                    urlParams={this.state.urlParams} />
+                    urlParams={this.state.urlParams}
+                    hasRemainingText={this.state.hasRemainingText} />
           </ListGroupItem>
 
           <Alert bsStyle={this.state.alertType}>{this.state.alertContent}</Alert>

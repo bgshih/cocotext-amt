@@ -8,11 +8,21 @@ MINIMUM_ACCURACY = 0.8
 # MINIMUM_ACCURACY = 0.7
 # NOTIFICATION_BLACK_LIST = ['A3EI4AOY9AZIQY', 'ADH9I9TEDVL9K', 'A36QWTX7JIIDT9', 'A1VIUV55F27XVM']
 
-SUBJECT_TEXT = """New HITs Available"""
-MESSAGE_TEXT = """Hello there! According to our record you performed well in the past HITs. Now we have new HITs available, and we welcome you to come back and work more! Search 'COCO-Text Team' to find these new HITs.
-"""
+# SUBJECT_TEXT = """New HITs Available"""
+# MESSAGE_TEXT = """Hello there! According to our record you performed well in the past HITs. Now we have new HITs available, and we welcome you to come back and work more! Search 'COCO-Text Team' to find these new HITs.
+# """
 
+SUBJECT_TEXT = """Please Avoid This Mistake"""
 # MESSAGE_TEXT = """Hello there! Thanks for your hard work! In the PDF at this link https://s3.amazonaws.com/cocotext-amt-resource/CommonMistakes-20170906.pdf I summarized some common mistakes in annotations. Please spend ~1min to read should you take further HITs. Let me know if you have any questions."""
+
+MESSAGE_TEXT = """Hello there! Thanks for your hard work!
+
+We have noticed that some Turkers tend to annotate a string of digits by individual characters. For example: https://s3.amazonaws.com/cocotext-amt-resource/DigitsMistake-20170916.png.
+
+Please be advised that this is NOT correct. Strings of digits such as door numbers, phone numbers should be considered as one word and annotated as one.
+
+Let us know if you have any questions.
+"""
 
 # SUBJECT_TEXT = """Common Mistakes Summary (~1min read)"""
 

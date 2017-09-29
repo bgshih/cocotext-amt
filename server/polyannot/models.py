@@ -194,12 +194,13 @@ class Submission(ModelBase):
             respondingContent = None
 
             Response.objects.get_or_create(
-                task           = self.task,
-                submission     = self,
-                submission_idx = i,
-                project_worker = self.project_worker,
-                content        = respondingContent,
-                polygon        = responseData
+                task             = self.task,
+                submission       = self,
+                submission_idx   = i,
+                project_worker   = self.project_worker,
+                content          = respondingContent,
+                polygon          = responseData['polygons'],
+                hasRemainingText = responseData['hasRemainingText']
             )
 
     def save(self, *args, **kwargs):
@@ -252,6 +253,9 @@ class Response(ModelBase):
     # Polygon drawn by worker.
     # If worker mark the hint as invalid, this field is None.
     polygon = JSONField(null=True)
+
+    # a field set by worker indicating whether there is remaining text in the image
+    hasRemainingText = models.BooleanField(default=True)
 
     # Each response creates a new text_instance if polygon is not None.
     text_instance = models.OneToOneField(

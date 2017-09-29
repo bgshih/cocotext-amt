@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import './App.css';
-import { Grid, FormGroup, FormControl, Button, ButtonGroup, Alert } from 'react-bootstrap';
+import { Grid, FormGroup, FormControl, Button, ButtonGroup, ToggleButtonGroup, ToggleButton, Checkbox, Alert } from 'react-bootstrap';
 import { MenuItem, DropdownButton } from 'react-bootstrap';
 import update from 'immutability-helper';
 
@@ -22,7 +22,8 @@ class App extends Component {
     this.state = {
       invalidJson: false,
       imagesList: [],
-      queryMode: QUERY_BY_IMAGE_IDS
+      queryMode: QUERY_BY_IMAGE_IDS,
+      showUnverified: false,
     };
   }
 
@@ -55,6 +56,9 @@ class App extends Component {
       case QUERY_BY_WORKER_ID:
         const workerId = inputData;
         fetchUrl = API_SERVER_URL + '/polyannot/_annotations/by_worker_id/' + workerId;
+        if (this.state.showUnverified === true) {
+          fetchUrl += '/unverified/';
+        }
         break;
       case QUERY_BY_TASK_IDS:
         const taskIdList = this.validateAndParseJson(inputData);
@@ -148,9 +152,16 @@ class App extends Component {
               </MenuItem>
               <MenuItem eventKey="4"
                         onClick={() => { this.setState({queryMode: QUERY_UNVERIFIED}); }}>
-                Unverified (250 max)
+                All
               </MenuItem>
             </DropdownButton>
+            <Button onClick={ () => {
+                      this.setState({
+                        showUnverified: !this.state.showUnverified
+                      })
+                    } }>
+              {this.state.showUnverified ? "Unverified" : "All"}
+            </Button>
           </ButtonGroup>
 
           <ButtonGroup>
