@@ -72,6 +72,7 @@ export class MultiImagesViewer extends Component {
     const imageId = imageAndAnnotations === null ? null : imageAndAnnotations.imageId;
     const annotations = imageAndAnnotations === null ? null : imageAndAnnotations.annotations;
     const adminMark = imageAndAnnotations === null ? null : imageAndAnnotations.adminMark;
+    const hasRemainingText = imageAndAnnotations === null ? null : imageAndAnnotations.hasRemainingText;
 
     return (
       <div>
@@ -81,6 +82,7 @@ export class MultiImagesViewer extends Component {
           imageId={imageId}
           annotations={annotations}
           adminMark={adminMark}
+          hasRemainingText={hasRemainingText}
         />
         <Pagination
           prev next first last ellipsis boundaryLinks
@@ -173,7 +175,8 @@ class ImageViewer extends Component {
     }
 
     return (
-      <Panel header={ "ID: " + this.props.imageId }
+      <Panel header={ "ID: " + this.props.imageId + " " +
+                      "hasRemainingText: " + this.props.hasRemainingText }
              style={ panelStyle }
              className="cardPanel">
         <canvas ref="canvas"

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import './App.css';
-import { Grid, FormGroup, FormControl, Button, ButtonGroup, ToggleButtonGroup, ToggleButton, Checkbox, Alert } from 'react-bootstrap';
+import { Grid, FormGroup, FormControl, Button, ButtonGroup, Alert } from 'react-bootstrap';
 import { MenuItem, DropdownButton } from 'react-bootstrap';
 import update from 'immutability-helper';
 
@@ -89,6 +89,27 @@ class App extends Component {
       });
   }
 
+  setAdminMarksFromUserMarks() {
+    // deep copy imagesList
+    const imagesListJson = JSON.stringify(this.state.imagesList);
+    var newImagesList = JSON.parse(imagesListJson);
+    for (var imageAndAnnotations of newImagesList) {
+      if (imageAndAnnotations !== null) {
+        const hasRemainingText = imageAndAnnotations.hasRemainingText;
+        if (hasRemainingText === null) {
+          imageAndAnnotations.adminMark = 'U';
+        } else if (hasRemainingText === true) {
+          imageAndAnnotations.adminMark = 'R';
+        } else if (hasRemainingText === false) {
+          imageAndAnnotations.adminMark = 'C';
+        }
+      }
+    }
+    this.setState({
+      imagesList: newImagesList
+    })
+  }
+
   submitAdminMarks() {
     var adminMarks = {}
     for (var imageAndAnnotation of this.state.imagesList) {
@@ -167,7 +188,11 @@ class App extends Component {
           <ButtonGroup>
             <Button className="btn btn-primary"
                     onClick={() => {this.submitAdminMarks()}}>
-              Submit Admin Marks
+              Submit admin marks
+            </Button>
+            <Button className="btn btn-primary"
+                    onClick={() => {this.setAdminMarksFromUserMarks()}}>
+              Set admin marks from user marks 
             </Button>
           </ButtonGroup>
 

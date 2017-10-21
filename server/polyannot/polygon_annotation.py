@@ -33,12 +33,17 @@ def get_task_data(request, hit_id):
     return JsonResponse(task_data)
 
 
-def get_annotations_by_worker_id(request, worker_id, only_unverified=False, max_num=200):
+def get_annotations_by_worker_id(request, worker_id, only_unverified=False, max_num=200, recent_first=True):
     worker = MturkWorker.objects.get(id=worker_id).polyannot_worker
+
+    submissions = worker.submissions
+    if recent_first:
+        submissions = submissions.order_by('-added')
+
     if only_unverified:
-        submissions = worker.submissions.filter(admin_mark='U')
+        submissions = submissions.filter(admin_mark='U')
     else:
-        submissions = worker.submissions.all()
+        submissions = submissions.all()
 
     imagesList = []
 
@@ -49,11 +54,14 @@ def get_annotations_by_worker_id(request, worker_id, only_unverified=False, max_
             polygon = response.text_instance.polygon
             annotations.append({'polygon': polygon})
 
+        hasRemainingText = submission.answer['hasRemainingText']
+
         imagesList.append({
             'submissionId': submission.id,
             'imageId': image_id,
             'annotations': annotations,
             'adminMark': submission.admin_mark,
+            'hasRemainingText': hasRemainingText
         })
 
     # sort image list by image id
@@ -67,7 +75,7 @@ def get_annotations_by_worker_id(request, worker_id, only_unverified=False, max_
     return JsonResponse(jsonResponse)
 
 
-def get_unverified_annotations(request, max_num=200):
+def get_unverified_annotations(request, max_num=1000):
     images_list = []
     unverified_submissions = Submission.objects.filter(admin_mark='U')[:max_num]
 

@@ -182,10 +182,10 @@ class Submission(ModelBase):
     def sync_responses(self, create_contents=True):
         # the answer must be list of polygons, each represented by a list of points
         # each in {'x': ..., 'y': ...} format
-        assert(self.answer is not None and isinstance(self.answer, list))
+        assert(self.answer is not None and isinstance(self.answer, dict))
         assert(create_contents == True)
         
-        for i, responseData in enumerate(self.answer):
+        for i, polygon_data in enumerate(self.answer['polygons']):
             # if 'respondingContentId' in responseData:
             #     respondingContent = Content.objects.get(id=responseData['respondingContentId'])
             # else:
@@ -199,13 +199,18 @@ class Submission(ModelBase):
                 submission_idx   = i,
                 project_worker   = self.project_worker,
                 content          = respondingContent,
-                polygon          = responseData['polygons'],
-                hasRemainingText = responseData['hasRemainingText']
+                polygon          = polygon_data,
             )
 
     def save(self, *args, **kwargs):
-        if self.answer is None:
-            self.answer = parse_answer_xml(self.assignment.answer_xml)
+        if self.answer is None or not isinstance(self.answer, dict):
+            answer = parse_answer_xml(self.assignment.answer_xml)
+            if isinstance(answer, list):
+                answer = {
+                    'polygons': answer,
+                    'hasRemainingText': None,
+                }
+            self.answer = answer
 
         super(Submission, self).save(*args, **kwargs)
 
@@ -253,9 +258,6 @@ class Response(ModelBase):
     # Polygon drawn by worker.
     # If worker mark the hint as invalid, this field is None.
     polygon = JSONField(null=True)
-
-    # a field set by worker indicating whether there is remaining text in the image
-    hasRemainingText = models.BooleanField(default=True)
 
     # Each response creates a new text_instance if polygon is not None.
     text_instance = models.OneToOneField(
