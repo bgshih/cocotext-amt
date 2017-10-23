@@ -41,8 +41,6 @@ class Project(ModelBase):
             if task.completed:
                 num_completed += 1
         print('{} tasks completed'.format(num_completed))
-        
-        # print('[2/2] Synching contents')
 
 
     def __str__(self):
@@ -178,6 +176,9 @@ class Submission(ModelBase):
         max_length=1,
         choices=ADMIN_MARK_TYPES,
         default='U')
+
+    # for miscellaneous use
+    misc_info = JSONField(null=True)
 
     def sync_responses(self, create_contents=True):
         # the answer must be list of polygons, each represented by a list of points

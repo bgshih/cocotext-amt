@@ -75,11 +75,20 @@ def get_annotations_by_worker_id(request, worker_id, only_unverified=False, max_
     return JsonResponse(jsonResponse)
 
 
-def get_unverified_annotations(request, max_num=1000):
+def get_unverified_annotations(request, max_num=100):
     images_list = []
-    unverified_submissions = Submission.objects.filter(admin_mark='U')[:max_num]
+    unverified_submissions = \
+        Submission.objects.filter(admin_mark='U').order_by('-added')
 
+    selected_submission_list = []
     for submission in unverified_submissions:
+        if submission.misc_info is None or \
+           'user_marks' not in submission.misc_info:
+            selected_submission_list.append(submission)
+        if len(selected_submission_list) >= max_num:
+            break
+
+    for submission in selected_submission_list:
         image_id = submission.task.image.id
         annotations = []
         for response in submission.responses.all():
@@ -133,4 +142,23 @@ def set_admin_marks(request):
         submission.admin_mark = value
         submission.save()
 
+    return JsonResponse({})
+
+
+@csrf_exempt
+def set_user_marks(request):
+    submission_json = json.loads(codecs.decode(request.body))
+    user_marks = submission_json['userMarks']
+    user_id = submission_json['userId']
+
+    for key, value in user_marks.items():
+        submission = Submission.objects.get(id=int(key))
+        misc_info = submission.misc_info
+        if misc_info is None:
+            misc_info = {}
+        if 'user_marks' not in misc_info:
+            misc_info['user_marks'] = {}
+        misc_info['user_marks'][user_id] = value
+        submission.misc_info = misc_info
+        submission.save()
     return JsonResponse({})

@@ -26,7 +26,7 @@ SECRET_KEY = '=1k1i!1z9z9dih@e!+fhc(yez4!vxwun6r&q7a^5$ek%j+oyxs'
 DEBUG = False
 
 # Use MTurk development sandbox
-MTURK_SANDBOX = DEBUG
+MTURK_SANDBOX = False
 
 # Use a separate database in development
 # DATABASE_NAME = 'cocotext_v2_sandbox' if MTURK_SANDBOX == True else \
