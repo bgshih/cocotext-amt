@@ -34,7 +34,7 @@ class App extends Component {
   }
 
   fetchImagesList() {
-    const fetchUrl = API_SERVER_URL + '/polyannot/_annotations/unverified/';
+    const fetchUrl = API_SERVER_URL + '/polyannot/_annotations/unverified_special/';
     fetch(fetchUrl)
       .then((response) => response.json())
       .then((responseData) => {

@@ -13,22 +13,29 @@ from polyannot.models import Submission
 
 def get_task_data(request, hit_id):
     task = MturkHit.objects.get(id=hit_id).polyannot_task
-    image_id = task.image.id
+    image = task.image
+    image_id = image.id
     image_url = settings.COCOTEXT_IMAGE_URL_TEMPLATE.format(image_id)
+
+    staticPolygons = []
+    if image.misc_info is not None and 'stage1' in image.misc_info:
+        staticPolygons = image.misc_info['stage1']['polygons']
+
+    print(staticPolygons)
 
     task_data = {
         'imageId': image_id,
         'imageUrl': image_url,
-        'staticPolygons': [],
+        'staticPolygons': staticPolygons,
         'hints': []
     }
 
-    for c in task.contents.filter(type='ST'):
-        task_data['staticPolygons'].append(c.text_instance.polygon)
+    # for c in task.contents.filter(type='ST'):
+    #     task_data['staticPolygons'].append(c.text_instance.polygon)
 
-    for c in task.contents.filter(type='HI'):
-        hint_pos = polygon_center(c.text_instance.polygon)
-        task_data['hints'].append(hint_pos)
+    # for c in task.contents.filter(type='HI'):
+    #     hint_pos = polygon_center(c.text_instance.polygon)
+    #     task_data['hints'].append(hint_pos)
 
     return JsonResponse(task_data)
 
@@ -75,10 +82,10 @@ def get_annotations_by_worker_id(request, worker_id, only_unverified=False, max_
     return JsonResponse(jsonResponse)
 
 
-def get_unverified_annotations(request, max_num=100):
+def get_unverified_annotations_for_worker_52(request, max_num=50):
     images_list = []
     unverified_submissions = \
-        Submission.objects.filter(admin_mark='U').order_by('-added')
+        Submission.objects.filter(admin_mark='U').exclude(project_worker=52).order_by('-added')
 
     selected_submission_list = []
     for submission in unverified_submissions:
@@ -101,12 +108,6 @@ def get_unverified_annotations(request, max_num=100):
             'annotations': annotations,
             'adminMark': submission.admin_mark,
         })
-
-    print('Num of unverified: {}'.format(len(images_list)))
-    
-    # sort image list by image id
-    # sorted_images_list = sorted(images_list, key=lambda item: int(item['imageId']))[:max_num]
-
     jsonResponse = {
         'imagesList': images_list
     }

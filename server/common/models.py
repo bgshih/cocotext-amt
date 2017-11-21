@@ -37,6 +37,8 @@ class CocoTextImage(ModelBase):
     height   = models.PositiveIntegerField()
     set      = models.CharField(max_length=3, choices=SUBSET_CHOICES)
 
+    misc_info = JSONField(null=True)
+
     def num_instances(self):
         return self.text_instances.count()
 
