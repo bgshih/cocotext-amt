@@ -16,10 +16,16 @@ const SubmitConfirmModal = ({ show, onHide, remainingSubmitTime, submitClicked, 
       Are you sure to submit?
     </Modal.Body> */}
 
+
     <Modal.Body>
+
+      <p><b>Before you submit, make sure you have annotated all words in the image. You can ignore words that are too small and blurry to read.</b></p>
+
       { remainingSubmitTime > 0 &&
         <Alert bsStyle='danger'><b>WARNING</b> You can only submit after {remainingSubmitTime} seconds.</Alert>
       }
+
+      {/*
       <p><b>Please answer: </b>Is there remaining text in the image? (We allow you to submit with remaining text when you have annotated at least 5 words)</p>
       <ButtonToolbar>
         <ButtonGroup type="radio" name="options" defaultValue={1}>
@@ -37,6 +43,7 @@ const SubmitConfirmModal = ({ show, onHide, remainingSubmitTime, submitClicked, 
       {hasRemainingText ?
         <p><b>Your answer: </b>There is remaining text in the image.</p> :
         <p><b>Your answer: </b>There is NO remaining text in the image.</p> }
+       */}
 
     </Modal.Body>
 

@@ -6,7 +6,7 @@ import { Button, Modal, Alert } from 'react-bootstrap';
 const InstructionModal = ({ show, upToNPolygons, hideClicked, pausePenalty, pausePenaltyCountdown }) => (
   <Modal show={ show } onHide={ hideClicked } bsSize='large'>
     <Modal.Header closeButton>
-      <Modal.Title><h2>Instructions (read carefully before starting to work!)</h2></Modal.Title>
+      <Modal.Title><h2>Instructions (Read carefully!! The instructions have been updated since its last version!!)</h2></Modal.Title>
     </Modal.Header>
 
     <Modal.Body>
@@ -17,9 +17,16 @@ const InstructionModal = ({ show, upToNPolygons, hideClicked, pausePenalty, paus
 
       <h2>Job Description</h2>
 
-      <p>We are collecting a dataset of text in natural images. In this dataset, each word should be annotated by a polygon that <b>tightly surrounds</b> it. Use the tool we provide to draw polygons around words you could find. You can stop annotating more when you have annotated <b>{upToNPolygons} words</b> in every image.</p>
+      <p>
+We are collecting a dataset of text in natural images.
+In this dataset, each word should be annotated by a polygon that <b>tightly surrounds</b> it.
+Use the tool we provide to draw polygons around words you could find.</p>
+
+<p><b>You must annotate <i>**ALL**</i> words you can find in the image. Ignore words that are too small and blurry to read.</b></p>
 
       <p><b>Every polygon should surround only one word. Do NOT draw a polygon to surround multiple.</b></p>
+
+      <p>Existing annotations are displayed in blue color. Skip those words!</p>
 
       <p>We define "word" a sequence of characters without blank space. Words such as "CocaCola", "www.google.com" are considered one word rather than two. Some words have large character space, which should not be interpreted as blank space symbols.</p>
 
@@ -36,6 +43,15 @@ const InstructionModal = ({ show, upToNPolygons, hideClicked, pausePenalty, paus
              width="800">
         </img>
       </a>
+
+      <h2>Bonus Policy</h2>
+      <p>Since the number of words in an image is not fixed, we reward worker based on the number of words they have annotated. Specifically:</p>
+      <ul>
+        <li>Under 5 annotations: no extra bonus</li>
+        <li>More than 5 annotations: each worth $0.01</li>
+        <li>For every 500 images correctly annotated: $10</li>
+      </ul>
+      <p>Bonus will be calculated and sent on weekly basis.</p>
 
     </Modal.Body>
 

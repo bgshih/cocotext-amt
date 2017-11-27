@@ -54,7 +54,6 @@ class Command(BaseCommand):
         image_list = []
         print('Getting the list of unannotated images...')
         for image in CocoTextImage.objects.all():
-            # FIXME: temporary test
             if image.misc_info is not None and image.misc_info['stage1']['completed'] == False and len(image.misc_info['stage1']['polygons']) > 0:
                 image_list.append(image)
         print('Retrieved {} images'.format(len(image_list)))
