@@ -43,14 +43,13 @@ def get_task_data(request, hit_id):
 def get_annotations_by_worker_id(request, worker_id, only_unverified=False, max_num=200, recent_first=True):
     worker = MturkWorker.objects.get(id=worker_id).polyannot_worker
 
-    submissions = worker.submissions
-    if recent_first:
-        submissions = submissions.order_by('-added')
-
+    submissions = worker.submissions.order_by('-added')
     if only_unverified:
         submissions = submissions.filter(admin_mark='U')
-    else:
-        submissions = submissions.all()
+    # if recent_first:
+    #     submissions = submissions.order_by('-added')
+    # else:
+    #     submissions = submissions.all()
 
     imagesList = []
 
@@ -63,12 +62,15 @@ def get_annotations_by_worker_id(request, worker_id, only_unverified=False, max_
 
         hasRemainingText = submission.answer['hasRemainingText']
 
+        previous_annotations = submission.task.image.misc_info['stage1']
+
         imagesList.append({
             'submissionId': submission.id,
             'imageId': image_id,
             'annotations': annotations,
             'adminMark': submission.admin_mark,
-            'hasRemainingText': hasRemainingText
+            'hasRemainingText': hasRemainingText,
+            'previousAnnotations': previous_annotations
         })
 
     # sort image list by image id

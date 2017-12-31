@@ -70,9 +70,11 @@ export class MultiImagesViewer extends Component {
   render() {
     const imageAndAnnotations = this.getActiveImageAndAnnotations();
     const imageId = imageAndAnnotations === null ? null : imageAndAnnotations.imageId;
+    const submissionId = imageAndAnnotations === null ? null : imageAndAnnotations.submissionId;
     const annotations = imageAndAnnotations === null ? null : imageAndAnnotations.annotations;
     const adminMark = imageAndAnnotations === null ? null : imageAndAnnotations.adminMark;
     const hasRemainingText = imageAndAnnotations === null ? null : imageAndAnnotations.hasRemainingText;
+    const previousAnnotations = imageAndAnnotations === null ? null : imageAndAnnotations.previousAnnotations;
 
     return (
       <div>
@@ -80,9 +82,11 @@ export class MultiImagesViewer extends Component {
           canvasWidth={this.props.canvasWidth}
           canvasHeight={this.props.canvasHeight}
           imageId={imageId}
+          submissionId={submissionId}
           annotations={annotations}
           adminMark={adminMark}
           hasRemainingText={hasRemainingText}
+          previousAnnotations={previousAnnotations}
         />
         <Pagination
           prev next first last ellipsis boundaryLinks
@@ -159,6 +163,30 @@ class ImageViewer extends Component {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.0)';
         ctx.fill();
       }
+
+      // draw previous annotations
+      if (this.props.previousAnnotations !== null) {
+        for (var polygon of this.props.previousAnnotations.polygons) {
+          // const polygon = annotation.polygon;
+          ctx.beginPath();
+          for (var i = 0; i < polygon.length; i++) {
+            const point = polygon[i];
+            const canvasX = dstX + scale * point.x;
+            const canvasY = dstY + scale * point.y;
+            if (i === 0) {
+              ctx.moveTo(canvasX, canvasY);
+            } else {
+              ctx.lineTo(canvasX, canvasY);
+            }
+          }
+          ctx.closePath();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = 'rgba(255, 0, 0, 0.9)';
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.0)';
+          ctx.fill();
+        }
+      }
     }
     image.src = imageUrl;
   }
@@ -175,7 +203,8 @@ class ImageViewer extends Component {
     }
 
     return (
-      <Panel header={ "ID: " + this.props.imageId + " " +
+      <Panel header={ "Image ID: " + this.props.imageId + " " +
+                      "Submission ID: " + this.props.submissionId + " " +
                       "hasRemainingText: " + this.props.hasRemainingText }
              style={ panelStyle }
              className="cardPanel">

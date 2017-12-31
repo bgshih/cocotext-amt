@@ -37,15 +37,29 @@ class Command(BaseCommand):
             default='polyannot-stage2',
             help='Slug name of the HIT type to use')
 
+        parser.add_argument(
+            '--repost',
+            action='store',
+            dest='repost',
+            default=False,
+            help='Repost unfinished HITs')
+
     def handle(self, *args, **kwargs):
         project = Project.objects.get(name='Polyannot')
         hit_type = MturkHitType.objects.get(slug=kwargs['hit_type_slug'])
 
-        self.create_stage2_annotation_tasks(
-            project=project,
-            hit_type=hit_type,
-            start_idx_within_qset=kwargs['start_idx_within_qset'],
-            max_num_tasks=kwargs['max_num_tasks'])
+        if not kwargs['repost']:
+            self.create_stage2_annotation_tasks(
+                project=project,
+                hit_type=hit_type,
+                start_idx_within_qset=kwargs['start_idx_within_qset'],
+                max_num_tasks=kwargs['max_num_tasks'])
+        else:
+            self.repost_unfinished_hits(
+                project=project,
+                hit_type=hit_type,
+                start_idx_within_qset=kwargs['start_idx_within_qset'],
+                max_num_tasks=kwargs['max_num_tasks'])
 
     def _get_stage2_image_list(self):
         """Get the list of images that are verified as
@@ -68,6 +82,42 @@ class Command(BaseCommand):
         image_list = image_list[start_idx_within_qset:start_idx_within_qset+max_num_tasks]
 
         if input('Going to create {} tasks, continue? (y/n) '.format(len(image_list))) != 'y':
+            print('Aborted')
+            return
+
+        for image in image_list:
+            hit = MturkHit.objects.create(
+                hit_type        = hit_type,
+                max_assignments = 1,
+                lifetime        = timedelta(days=7),
+                question        = HIT_QUESTION,
+            )
+            task = Task.objects.create(
+                hit=hit,
+                project=project,
+                image=image
+            )
+
+    def repost_unfinished_hits(self,
+                               project=None,
+                               hit_type=None,
+                               start_idx_within_qset=0,
+                               max_num_tasks=0):
+        stage2_hits = MturkHit.objects.filter(hit_type='39I6UD9LVJWMG2FU1GOQCZH5SFAN6D')
+
+        image_list = []
+
+        for hit in stage2_hits:
+            task = hit.polyannot_task
+            if task.submissions.count() == 0:
+                # not submitted, need repost
+                image_list.append(task.image)
+
+        print('Retrieved {} unfinished images'.format(len(image_list)))
+
+        image_list = image_list[start_idx_within_qset:start_idx_within_qset+max_num_tasks]
+
+        if input('Going to repost {} tasks, continue? (y/n) '.format(len(image_list))) != 'y':
             print('Aborted')
             return
 

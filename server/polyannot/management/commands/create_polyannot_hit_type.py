@@ -12,10 +12,10 @@ class Command(BaseCommand):
         pass
 
     def create_polyannot_hit_type_stage2(self):
-        qtype_test = QualificationType.objects.get(slug='annot-verification-test-v3')
-        qtype_admin_level = QualificationType.objects.get(slug='polyannot-admin-level-stage2')
+        # qtype_test = QualificationType.objects.get(slug='annot-verification-test-v3')
+        qtype_admin_level = QualificationType.objects.get(slug='polyannot-admin-level')
         hit_type, created = MturkHitType.objects.get_or_create(
-            slug                = 'polyannot-stage2-general',
+            slug                = 'polyannot-stage2-worker-52',
             auto_approval_delay = timedelta(days=1),
             assignment_duration = timedelta(minutes=45),
             reward              = '0.05',
@@ -24,16 +24,10 @@ class Command(BaseCommand):
             description         = 'Draw polygons around words to surround them tightly',
             qrequirements       = [
                 {
-                    'QualificationTypeId': qtype_test.id,
-                    'Comparator': 'GreaterThanOrEqualTo',
-                    'IntegerValues': [90,],
-                    'RequiredToPreview': False
-                },
-                {
                     'QualificationTypeId': qtype_admin_level.id,
-                    'Comparator': 'GreaterThanOrEqualTo',
-                    'IntegerValues': [0,],
-                    'RequiredToPreview': False
+                    'Comparator': 'EqualTo',
+                    'IntegerValues': [10,],
+                    'RequiredToPreview': True
                 },
             ]
         )
