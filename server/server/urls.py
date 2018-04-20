@@ -24,4 +24,5 @@ urlpatterns = [
     url(r'^textins/(.+)/crop/polygon/$', text_instance.get_text_instance_polygon_in_crop),
     url(r'^polyverif/', include('polyverif.urls')),
     url(r'^polyannot/', include('polyannot.urls')),
+    url(r'^textannot/', include('textannot.urls'))
 ]

@@ -29,7 +29,7 @@ DEBUG = False
 MTURK_SANDBOX = False
 
 # Use a separate database in development
-DATABASE_NAME = 'cocotext_v2_dev' if MTURK_SANDBOX else 'cocotext_v2'
+DATABASE_NAME = 'cocotext_v2'
 
 ALLOWED_HOSTS = [
     # 'amt-api.bgshi.me'
@@ -92,7 +92,7 @@ DATABASES = {
         'USER': 'cocotext',
         'PASSWORD': 'w2PtkwRhThtyA',
         'HOST': 'localhost',
-        'PORT': '5432',
+        'PORT': '5433',
     }
 }
 

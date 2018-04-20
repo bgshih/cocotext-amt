@@ -1,3 +1,4 @@
 .vscode/
 *.pgdump
 *DS_Store
+data/
