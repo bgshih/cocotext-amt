@@ -33,10 +33,14 @@ export class Card extends Component {
                 className="CardCanvas" />
         <Form className="CardForm">
           <FormControl type="text" placeholder="Text in the image"/>
-          <Checkbox checked={ this.props.illegible }>
+
+          <Checkbox checked={ this.props.illegible }
+                    onChange={ () => { this.props.setIllegible(!this.props.illegible); } }>
             Illegible (i)
           </Checkbox>
-          <Checkbox checked={ this.props.unknownLanguage }>
+
+          <Checkbox checked={ this.props.unknownLanguage }
+                    onChange={ () => { this.props.setUnknownLanguage(!this.props.unknownLanguage); } }>
             Unknown Language (u)
           </Checkbox>
         </Form>
