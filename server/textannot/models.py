@@ -34,7 +34,6 @@ class Project(ModelBase):
 
         print('[2/2] Updating worker statistics')
 
-
     def __str__(self):
         return self.name
 
@@ -208,7 +207,6 @@ class Content(ModelBase):
     tasks = models.ManyToManyField(Task, related_name='contents')
     groundtruth_text = models.CharField(max_length=1024, null=True)
     sentinel = models.BooleanField(default=False)
-
     consensus = models.CharField(max_length=1024, null=True)
 
     def _get_consensus(self):
