@@ -1,0 +1,42 @@
+# Starting docker on different platforms
+
+
+## Home PC
+
+    docker run \
+        -it \
+        -p 80:80 \
+        -p 443:443 \
+        -p 22:22 \
+        -p 8000:8000 \
+        -p 3000:3000 \
+        cocotext:0.12 /bin/bash
+
+
+## Lab server
+
+On the lab server, first login to mclab-1033 (need sudo)
+
+    sudo ssh -L 80:localhost:80 \
+             -L 443:localhost:443 \
+             -L 50000:localhost:50000 \
+             -L 50001:localhost:50001 \
+             -L 50002:localhost:50002 \
+             -p 1033 bgshi@222.20.79.226
+
+Then, start the docker image (currently cocotext:0.12) on the server:
+
+    docker run \
+        -it \
+        -p 80:80 \
+        -p 443:443 \
+        -p 50000:22 \
+        -p 50001:8000 \
+        -p 50002:3000 \
+        cocotext:0.12 /bin/bash
+
+After this, I can access:
+  - http://localhost, Nginx HTTP
+  - https://localhost, Nginx HTTPS
+  - http://localhost:50001/admin, Django admin, need to run `python3 manage.py runserver 0.0.0.0:8000` first
+  - http://localhost:50002, React development server, need to run `npm start` first

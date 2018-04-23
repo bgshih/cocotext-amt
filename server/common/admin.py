@@ -22,7 +22,7 @@ class CocoTextInstanceAdmin(admin.ModelAdmin):
     list_display = [f.name for f in CocoTextInstance._meta.fields if not \
         f.name in ('added', 'updated', 'polygon')
     ]
-    list_filter = ('from_v1',)
+    list_filter = ('from_v1', 'stage_2')
 admin.site.register(CocoTextInstance, CocoTextInstanceAdmin)
 
 

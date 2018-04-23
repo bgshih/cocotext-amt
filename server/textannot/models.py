@@ -43,12 +43,14 @@ class ProjectWorker(ModelBase):
 
     mturk_worker = models.OneToOneField(
         MturkWorker,
-        related_name='textannot_worker'
+        related_name='textannot_worker',
+        null=True,
     )
     project = models.ForeignKey(
         Project,
         related_name='project_workers'
     )
+    nickname = models.CharField(max_length=128, null=True)
 
     def num_responses(self):
         return self.responses.count()
@@ -69,6 +71,15 @@ class ProjectWorker(ModelBase):
         accuracy = (None if self.num_sentinel_responded == 0 else
                     self.num_sentinel_correct / self.num_sentinel_responded)
         return accuracy
+
+    def save(self, *args, **kwargs):
+        self.num_sentinel_responded, self.num_sentinel_correct = self._calculate_sentinel_statistics()
+        super(ProjectWorker, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return '{}{}'.format(
+            self.mturk_worker if self.mturk_worker is not None else '',
+            ' ({})'.format(self.nickname) if self.nickname is not None else '')
 
 
 class Task(ModelBase):
@@ -208,6 +219,16 @@ class Content(ModelBase):
     groundtruth_text = models.CharField(max_length=1024, null=True)
     sentinel = models.BooleanField(default=False)
     consensus = models.CharField(max_length=1024, null=True)
+    status = models.CharField(
+        max_length=1,
+        choices=(
+            ('U', 'Unassigned'), # has not been assigned
+            ('F', 'Finished'), # has reached concensus or has been confirmed manually
+            ('P', 'Pending'), # assignments not finished
+            ('D', 'Dispute'), # assignments finished but consensus not reached
+        ),
+        default='U'
+    )
 
     def _get_consensus(self):
         if self.sentinel == True:
@@ -241,7 +262,8 @@ class Response(ModelBase):
     submission = models.ForeignKey(
         Submission,
         on_delete=models.CASCADE,
-        related_name='responses'
+        related_name='responses',
+        null=True
     )
     content = models.ForeignKey(
         Content,

@@ -87,6 +87,15 @@ class CocoTextInstance(ModelBase):
     # create a new instance to correct an old one
     parent_instance         = models.ForeignKey('CocoTextInstance', null=True, related_name='child_instances')
 
+    # Stage 2 annotations (text annotation)
+    # Notes:
+    # 1) In stage 2, polygon_verification, text_verification, legibility_verification,
+    # language_verification, and parent_instance are no longer used and are kept only
+    # for compatibility considerations
+    # 2) In stage 2, instance IDs follow this format: "<IMAGE_ID>-<INSTNACE_INDEX>".
+    # For example, "142497-001" is the first text instance of image "142497"
+    stage_2                 = models.BooleanField(default=False)
+
     def __str__(self):
         return str(self.id)
 
