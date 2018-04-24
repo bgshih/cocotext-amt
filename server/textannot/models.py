@@ -218,18 +218,8 @@ class Content(ModelBase):
     tasks = models.ManyToManyField(Task, related_name='contents')
     groundtruth_text = models.CharField(max_length=1024, null=True)
     sentinel = models.BooleanField(default=False)
-    consensus = models.CharField(max_length=1024, null=True)
-    status = models.CharField(
-        max_length=1,
-        choices=(
-            ('U', 'Unassigned'), # has not been assigned
-            ('F', 'Finished'), # has reached concensus or has been confirmed manually
-            ('P', 'Pending'), # assignments not finished
-            ('D', 'Dispute'), # assignments finished but consensus not reached
-        ),
-        default='U'
-    )
 
+    consensus = models.CharField(max_length=1024, null=True)
     def _get_consensus(self):
         if self.sentinel == True:
             return self.groundtruth_text
@@ -248,8 +238,32 @@ class Content(ModelBase):
                     break
             return consensus
 
+    status = models.CharField(
+        max_length=1,
+        choices=(
+            ('U', 'Unassigned'), # has not been assigned
+            ('F', 'Finished'), # has reached concensus or has been confirmed manually
+            ('P', 'Pending'), # assignments not finished
+            ('D', 'Dispute'), # assignments finished but consensus not reached
+        ),
+        default='U'
+    )
+    def _get_status(self):
+        if self.consensus is not None:
+            return 'F' # reached consensus, finished
+        elif self.tasks.count() == 0:
+            return 'U' # not assigned to any tasks, unassigned
+        elif all(task.completed for task in self.tasks):
+            return 'D' # all tasks completed but still no consensus, dispute
+        else:
+            return 'P' # not all tasks completed, pending
+
+    def num_responses(self):
+        return self.responses.count()
+
     def save(self, *args, **kwargs):
         self.consensus = self._get_consensus()
+        self.status = self._get_status()
         super(Content, self).save(*args, **kwargs)
 
     def __str__(self):

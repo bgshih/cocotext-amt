@@ -9,7 +9,8 @@ admin.site.register(Project, ProjectAdmin)
 
 
 class ContentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'status', 'sentinel', 'groundtruth_text', 'consensus', 'text_instance')
+    list_display = ('id', 'status', 'num_responses', 'sentinel', 'groundtruth_text', 'consensus', 'text_instance')
+    list_filter = ('status', 'sentinel')
 admin.site.register(Content, ContentAdmin)
 
 
