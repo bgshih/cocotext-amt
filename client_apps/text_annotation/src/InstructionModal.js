@@ -35,15 +35,20 @@ const InstructionModal = ({ show, hideClicked, pausePenalty, pausePenaltyCountdo
         For your convenience, common symbols have been provided on the toolbar for you to copy and paste.
       </p>
 
-      {/* <h3>Examples (click to enlarge)</h3>
+      <p>
+        When multiple words exists in one image, only annotate the word in the center and ignore others.
+        Hover on the image to show the target word. 
+      </p>
+
+      <h3>Examples (click to enlarge)</h3>
       <a target="_blank"
          rel="noopener noreferrer"
-         href="https://s3.amazonaws.com/cocotext-amt-resource/polygon-verification-examples.jpg">
+         href="https://s3.amazonaws.com/cocotext-amt-resource/text-annotation-examples.png">
         <img alt="Examples"
-             src="https://s3.amazonaws.com/cocotext-amt-resource/polygon-verification-examples.jpg"
+             src="https://s3.amazonaws.com/cocotext-amt-resource/text-annotation-examples.png"
              width="800">
         </img>
-      </a> */}
+      </a>
 
     </Modal.Body>
 

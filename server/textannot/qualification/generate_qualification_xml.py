@@ -1,6 +1,3 @@
-from lxml import etree
-
-
 TEST_TEMPALTE = \
 """<QuestionForm xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2005-10-01/QuestionForm.xsd">
   <Overview>
@@ -8,13 +5,25 @@ TEST_TEMPALTE = \
     <FormattedContent><![CDATA[
       <h3>Job Description</h3>
 
-      <p>We are collecting a dataset of text in natural images. In this dataset, each word should be annotated by a polygon that tightly surrounds it. We have some existing annotations. Your job is to judge these annotations.</p>
-      <p>You will see a grid of cards, each an annotation. Click on the cards to mark them as correct (green) or wrong (red). Submit after marking all cards.</p>
+      <h3>Job Description</h3>
+
+      <p>
+        <b>Your task: Annotate text in every image.</b>
+      </p>
+      <p>
+        If text is illegible (unable to read) check the "Illegible" checkbox.
+        If text is not in a langauge that you know, check the "Unknown Language" checkbox.
+      </p>
+
+      <p>
+        Punctuations and symbols should be annotated as well.
+        For your convenience, common symbols have been provided on the toolbar for you to copy and paste.
+      </p>
 
       <h3>Examples (click to enlarge)</h3>
-      <a href="https://s3.amazonaws.com/cocotext-amt-resource/polygon-verification-examples.jpg">
+      <a href="https://s3.amazonaws.com/cocotext-amt-resource/text-annotation-examples.png">
         <img alt="Examples"
-             src="https://s3.amazonaws.com/cocotext-amt-resource/polygon-verification-examples.jpg"
+             src="https://s3.amazonaws.com/cocotext-amt-resource/text-annotation-examples.png"
              width="800" />
       </a>
     ]]></FormattedContent>
@@ -26,36 +35,27 @@ TEST_TEMPALTE = \
 
 QUESTION_TEMPALTE = \
 """  <Question>
-    <!-- Q{0} -->
     <QuestionIdentifier>Q{0}</QuestionIdentifier>
     <DisplayName>Question-{0}</DisplayName>
     <IsRequired>true</IsRequired>
     <QuestionContent>
-      <Text>Is this annotation correct?</Text>
+      <Text>Annotate the text in this image.</Text>
       <Binary>
         <MimeType>
           <Type>image</Type>
-          <SubType>png</SubType>
+          <SubType>jpg</SubType>
         </MimeType>
-        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/test_questions_v2/q{0}.png</DataURL>
+        <DataURL>https://s3.amazonaws.com/cocotext-amt-resource/textannot-test-questions/q{0}.jpg</DataURL>
         <AltText>Question-{0}</AltText>
       </Binary>
     </QuestionContent>
 
     <AnswerSpecification>
-      <SelectionAnswer>
-        <StyleSuggestion>radiobutton</StyleSuggestion>
-        <Selections>
-          <Selection>
-            <SelectionIdentifier>W</SelectionIdentifier>
-            <Text>Wrong</Text>
-          </Selection>
-          <Selection>
-            <SelectionIdentifier>C</SelectionIdentifier>
-            <Text>Correct</Text>
-          </Selection>
-        </Selections>
-      </SelectionAnswer>
+      <FreeTextAnswer>
+        <Constraints>
+          <Length maxLength="128" />
+        </Constraints>
+      </FreeTextAnswer>
     </AnswerSpecification>
   </Question>
 """
@@ -74,18 +74,29 @@ ANSWER_KEY_TEMPLATE = \
 QUESTION_ANSWER_TEMPLATE = \
 """<Question>
     <QuestionIdentifier>Q{0}</QuestionIdentifier>
-    <AnswerOption>
-      <SelectionIdentifier>{1}</SelectionIdentifier>
+    <Answer>
+      <FreeText>{1}</FreeText>
       <AnswerScore>10</AnswerScore>
-    </AnswerOption>
+    </Answer>
   </Question>
 """
 
-# GROUNDTRUTH_ANSWERS = ['C', 'W', 'W', 'W', 'W', 'C', 'C', 'W', 'W', 'C'] # v1
-GROUNDTRUTH_ANSWERS = ['C', 'W', 'C', 'W', 'W', 'C', 'W', 'W', 'C', 'C']
+GROUNDTRUTH_ANSWERS = [
+  "LINCOLN",
+  "Photo",
+  "A's",
+  "DELICIOUS",
+  "ST",
+  "SMOOTH",
+  "Silk",
+  "Chocolate",
+  "L-17",
+  "kefalotyri"
+]
+
 
 def generate_test():
-    questions_str = '\n\n'.join([QUESTION_TEMPALTE.format(i+1) for i in range(10)])
+    questions_str = '\n\n'.join([QUESTION_TEMPALTE.format(i) for i in range(10)])
     test_str = TEST_TEMPALTE.format(questions_str)
 
     with open('test.xml', 'w') as f:
@@ -94,7 +105,7 @@ def generate_test():
 
 def generate_answer_key():
     questions = [
-        QUESTION_ANSWER_TEMPLATE.format(i+1, GROUNDTRUTH_ANSWERS[i]) for i in range(10)
+        QUESTION_ANSWER_TEMPLATE.format(i, GROUNDTRUTH_ANSWERS[i]) for i in range(10)
     ]
     question_answers_str = '\n\n'.join(questions)
     answer_key_str = ANSWER_KEY_TEMPLATE.format(question_answers_str)

@@ -438,10 +438,7 @@ class QualificationType(ModelBase):
     auto_granted       = models.BooleanField()
     auto_granted_value = models.IntegerField(blank=True, null=True)
 
-    slug = models.CharField(
-        max_length=128,
-        unique=True
-    )
+    slug = models.CharField(max_length=128, unique=True)
 
     FIELD_PARAM_MAPPINGS = (
         ('id', 'QualificationTypeId'),

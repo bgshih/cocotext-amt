@@ -1,0 +1,96 @@
+<AnswerKey xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2005-10-01/AnswerKey.xsd">
+<Question>
+    <QuestionIdentifier>Q0</QuestionIdentifier>
+    <Answer>
+      <FreeText>LINCOLN</FreeText>
+      <AnswerScore>10</AnswerScore>
+    </Answer>
+  </Question>
+
+
+<Question>
+    <QuestionIdentifier>Q1</QuestionIdentifier>
+    <Answer>
+      <FreeText>Photo</FreeText>
+      <AnswerScore>10</AnswerScore>
+    </Answer>
+  </Question>
+
+
+<Question>
+    <QuestionIdentifier>Q2</QuestionIdentifier>
+    <Answer>
+      <FreeText>A's</FreeText>
+      <AnswerScore>10</AnswerScore>
+    </Answer>
+  </Question>
+
+
+<Question>
+    <QuestionIdentifier>Q3</QuestionIdentifier>
+    <Answer>
+      <FreeText>DELICIOUS</FreeText>
+      <AnswerScore>10</AnswerScore>
+    </Answer>
+  </Question>
+
+
+<Question>
+    <QuestionIdentifier>Q4</QuestionIdentifier>
+    <Answer>
+      <FreeText>ST</FreeText>
+      <AnswerScore>10</AnswerScore>
+    </Answer>
+  </Question>
+
+
+<Question>
+    <QuestionIdentifier>Q5</QuestionIdentifier>
+    <Answer>
+      <FreeText>SMOOTH</FreeText>
+      <AnswerScore>10</AnswerScore>
+    </Answer>
+  </Question>
+
+
+<Question>
+    <QuestionIdentifier>Q6</QuestionIdentifier>
+    <Answer>
+      <FreeText>Silk</FreeText>
+      <AnswerScore>10</AnswerScore>
+    </Answer>
+  </Question>
+
+
+<Question>
+    <QuestionIdentifier>Q7</QuestionIdentifier>
+    <Answer>
+      <FreeText>Chocolate</FreeText>
+      <AnswerScore>10</AnswerScore>
+    </Answer>
+  </Question>
+
+
+<Question>
+    <QuestionIdentifier>Q8</QuestionIdentifier>
+    <Answer>
+      <FreeText>L-17</FreeText>
+      <AnswerScore>10</AnswerScore>
+    </Answer>
+  </Question>
+
+
+<Question>
+    <QuestionIdentifier>Q9</QuestionIdentifier>
+    <Answer>
+      <FreeText>kefalotyri</FreeText>
+      <AnswerScore>10</AnswerScore>
+    </Answer>
+  </Question>
+
+  <QualificationValueMapping>
+    <PercentageMapping>
+      <MaximumSummedScore>100</MaximumSummedScore>
+    </PercentageMapping>
+  </QualificationValueMapping>
+</AnswerKey>
