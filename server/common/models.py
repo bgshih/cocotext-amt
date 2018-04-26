@@ -305,8 +305,8 @@ class MturkHit(ModelBase):
                 skip_none=True
             )
             response = get_mturk_client().create_hit_with_hit_type(**params)['HIT']
-            print('HIT {} created on MTurk with HITType {}'.format(
-                response['HITId'], response['HITTypeId']))
+            # print('HIT {} created on MTurk with HITType {}'.format(
+            #     response['HITId'], response['HITTypeId']))
 
             set_fields_from_params(
                 self, response, self.FIELD_PARAM_MAPPINGS,
@@ -581,6 +581,17 @@ class QualificationRequest(ModelBase):
     answer      = models.TextField()
     submit_time = models.DateTimeField()
 
+    status = models.CharField(
+        max_length=1,
+        choices=(
+            ('P', 'Pending'),
+            ('A', 'Accepted'),
+            ('R', 'Rejected')
+        ),
+        default='P'
+    )
+    value = models.IntegerField(null=True)
+
     def accept(self, value=None):
         """ Accept request with an optional integer value attached to it. """
         params = {
@@ -588,10 +599,13 @@ class QualificationRequest(ModelBase):
         }
         if value is not None:
             params['IntegerValue'] = value
+            self.value = value
         get_mturk_client().accept_qualification_request(**params)
         print('Qualification request {} by worker {} has been ACCEPTED on MTurk'.format(
             self.id, self.worker
         ))
+        self.status = 'A'
+        self.save()
 
     def reject(self, reason=None):
         """ Reject request. """
@@ -604,6 +618,8 @@ class QualificationRequest(ModelBase):
         print('Qualification request {} by worker {} has been REJECTED on MTurk'.format(
             self.id, self.worker
         ))
+        self.status = 'R'
+        self.save()
 
     def __str__(self):
         return str(self.id)

@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 
+from celery.schedules import crontab
+
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -155,3 +158,19 @@ POLYVERIF_MIN_CONSENSUS_COUNT = 3
 
 # Polygon annotation
 COCOTEXT_IMAGE_URL_TEMPLATE = 'https://s3.amazonaws.com/cocotext-images/train2014/COCO_train2014_{:0>12}.jpg'
+
+
+# Celery application definition
+# http://docs.celeryproject.org/en/v4.0.2/userguide/configuration.html
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+CELERY_BEAT_SCHEDULE = {
+    'process-qualification-requests': {
+        'task': 'textannot.tasks.process_qualification_requests',
+        'schedule': crontab(minute='*/5'),
+    },
+}

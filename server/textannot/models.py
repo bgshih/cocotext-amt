@@ -253,7 +253,7 @@ class Content(ModelBase):
             return 'F' # reached consensus, finished
         elif self.tasks.count() == 0:
             return 'U' # not assigned to any tasks, unassigned
-        elif all(task.completed for task in self.tasks):
+        elif self.tasks.filter(completed=False).count() == 0:
             return 'D' # all tasks completed but still no consensus, dispute
         else:
             return 'P' # not all tasks completed, pending

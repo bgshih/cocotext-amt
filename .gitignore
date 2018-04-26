@@ -2,3 +2,4 @@
 *.pgdump
 *DS_Store
 data/
+*.db

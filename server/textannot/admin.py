@@ -8,6 +8,11 @@ class ProjectAdmin(admin.ModelAdmin):
 admin.site.register(Project, ProjectAdmin)
 
 
+class TaskAdmin(admin.ModelAdmin):
+    list_display = ('id', 'hit', 'completed', 'num_submissions_required', 'num_contents', 'num_submissions')
+    readonly_fields = ('hit', 'project')
+admin.site.register(Task, TaskAdmin)
+
 class ContentAdmin(admin.ModelAdmin):
     list_display = ('id', 'status', 'num_responses', 'sentinel', 'groundtruth_text', 'consensus', 'text_instance')
     list_filter = ('status', 'sentinel')

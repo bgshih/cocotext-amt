@@ -4,11 +4,12 @@ import random
 import logging
 from tqdm import tqdm
 from datetime import timedelta
+from decimal import Decimal
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
-from common.models import MturkHitType, MturkHit
+from common.models import MturkHitType, MturkHit, QualificationType
 from textannot.models import Project, Task, Content
 
 logging.warning('USING LOCALHOST IN HIT QUESTION, REPLACE IT WITH REMOTE SERVER IN DEPLOYMENT')
@@ -57,6 +58,7 @@ class Command(BaseCommand):
             help='Include disputed contents')
 
     def handle(self, *args, **options):
+        # self.create_hit_type_v1()
         project = Project.objects.get(name='TextAnnotation')
         self.create_tasks(
             project=project,
@@ -64,6 +66,27 @@ class Command(BaseCommand):
             sentinel_portion=options['sentinel_portion'],
             include_dispute=options['include_dispute'],
             num_tasks=options['num_tasks'])
+
+    def create_hit_type_v1(self):
+        qtype_test = QualificationType.objects.get(slug='textannot-test-v1')
+        hit_type, created = MturkHitType.objects.get_or_create(
+            slug='textannot-v1',
+            auto_approval_delay=timedelta(days=1),
+            assignment_duration=timedelta(minutes=30),
+            reward='0.08',
+            title='Annotate text in every image',
+            keywords='Transcription,Text,Annotation,Label',
+            description='Annotate text in every image',
+            qrequirements=[
+                {
+                    'QualificationTypeId': qtype_test.id,
+                    'Comparator': 'GreaterThanOrEqualTo',
+                    'IntegerValues': [80,],
+                    'RequiredToPreview': False
+                }
+            ]
+        )
+        print('HitType {} {}'.format(hit_type, 'created' if created else 'exists'))
 
     def create_tasks(self,
                      project=None,
@@ -82,23 +105,26 @@ class Command(BaseCommand):
             print('Aborted')
             return
 
-        # project = Project.objects.get(name='TextAnnotation')
-        # for i in range(num_tasks_to_create):
-        #     hit = MturkHit.objects.create(
-        #         hit_type        = hit_type,
-        #         max_assignments = 1,
-        #         lifetime        = timedelta(days=7),
-        #         question        = HIT_QUESTION,
-        #     )
-        #     task = Task.objects.create(hit=hit, project=project)
+        project = Project.objects.get(name='TextAnnotation')
+        hit_type = MturkHitType.objects.get(slug='textannot-v1')
 
-        #     content_count = 0
-        #     for j in range(num_content_per_task):
-        #         content_index = i * num_content_per_task + j
-        #         if content_index >= num_contents:
-        #             break
-        #         else:
-        #             content = contents[content_index].tasks.add(task)
-        #             content.save()
-        #             content_count += 1
-        #     print('[{}/{}] Created HIT {} with {} contents'.format(i+1, num_tasks_to_create, hit.id, content_count))
+        for i in range(num_tasks_to_create):
+            hit = MturkHit.objects.create(
+                hit_type        = hit_type,
+                max_assignments = 1,
+                lifetime        = timedelta(days=7),
+                question        = HIT_QUESTION,
+            )
+            task = Task.objects.create(hit=hit, project=project)
+
+            content_count = 0
+            for j in range(num_content_per_task):
+                content_index = i * num_content_per_task + j
+                if content_index >= num_contents:
+                    break
+                else:
+                    content = contents[content_index]
+                    content.tasks.add(task)
+                    content.save()
+                    content_count += 1
+            print('[{}/{}] Created HIT {} with {} contents'.format(i+1, num_tasks_to_create, hit.id, content_count))

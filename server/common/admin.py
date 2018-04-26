@@ -59,6 +59,6 @@ admin.site.register(QualificationType, QualificationTypeAdmin)
 
 
 class QualificationRequestAdmin(admin.ModelAdmin):
-    readonly_fields = ('added', 'updated', 'id', 'qtype', 'worker', 'test', 'answer', 'submit_time')
-    list_display = ('id', 'qtype', 'worker', 'submit_time')
+    readonly_fields = ('added', 'updated', 'id', 'qtype', 'worker', 'test', 'answer', 'submit_time', 'status', 'value')
+    list_display = ('id', 'qtype', 'worker', 'submit_time', 'status', 'value')
 admin.site.register(QualificationRequest, QualificationRequestAdmin)
