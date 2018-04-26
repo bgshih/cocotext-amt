@@ -522,8 +522,7 @@ class QualificationType(ModelBase):
         print('QualificationType {} deleted on MTurk'.format(self.id))
         super(QualificationType, self).delete(*args, **kwargs)
 
-    def sync_requests(self, sync_workers=True):
-        assert(sync_workers == True)
+    def sync_requests(self):
         page_size = 64
 
         # retrieve all requests
@@ -532,7 +531,6 @@ class QualificationType(ModelBase):
             QualificationTypeId=self.id,
             MaxResults=page_size
         )
-        print(response)
         qrequest_responses.extend(response['QualificationRequests'])
         while 'NextToken' in response:
             response = get_mturk_client().list_qualification_requests(
@@ -544,8 +542,8 @@ class QualificationType(ModelBase):
 
         for request in qrequest_responses:
             assert(self.id == request['QualificationTypeId'])
-            worker, _ = MturkWorker.get_or_create(id=request['WorkerId'])
-            qrequest, created = QualificationRequest.get_or_create(
+            worker, _ = MturkWorker.objects.get_or_create(id=request['WorkerId'])
+            qrequest, created = QualificationRequest.objects.get_or_create(
                 id          = request['QualificationRequestId'],
                 qtype       = self,
                 worker      = worker,
@@ -564,7 +562,7 @@ class QualificationType(ModelBase):
         set_fields_from_params(
             self, response, self.FIELD_PARAM_MAPPINGS,
             ('qtype_status', 'is_requestable'))
-        self.save(update_on_mturk=False)
+        super(QualificationType, self).save()
 
         if sync_requests == True:
             self.sync_requests()
@@ -590,7 +588,7 @@ class QualificationRequest(ModelBase):
         }
         if value is not None:
             params['IntegerValue'] = value
-        client.accept_qualification_request(**params)
+        get_mturk_client().accept_qualification_request(**params)
         print('Qualification request {} by worker {} has been ACCEPTED on MTurk'.format(
             self.id, self.worker
         ))
@@ -602,7 +600,7 @@ class QualificationRequest(ModelBase):
             'QualificationRequestId': self.id,
             'Reason': reason
         }
-        client.reject_qualification_request(**params)
+        get_mturk_client().reject_qualification_request(**params)
         print('Qualification request {} by worker {} has been REJECTED on MTurk'.format(
             self.id, self.worker
         ))

@@ -3,9 +3,7 @@ TEST_TEMPALTE = \
   <Overview>
     <Title>Read the instructions and finish the tests.</Title>
     <FormattedContent><![CDATA[
-      <h3>Job Description</h3>
-
-      <h3>Job Description</h3>
+      <h2>Job Description</h2>
 
       <p>
         <b>Your task: Annotate text in every image.</b>
@@ -20,7 +18,7 @@ TEST_TEMPALTE = \
         For your convenience, common symbols have been provided on the toolbar for you to copy and paste.
       </p>
 
-      <h3>Examples (click to enlarge)</h3>
+      <h2>Examples (click to enlarge)</h2>
       <a href="https://s3.amazonaws.com/cocotext-amt-resource/text-annotation-examples.png">
         <img alt="Examples"
              src="https://s3.amazonaws.com/cocotext-amt-resource/text-annotation-examples.png"
@@ -116,4 +114,4 @@ def generate_answer_key():
 
 if __name__ == '__main__':
     generate_test()
-    generate_answer_key()
+    # generate_answer_key()
