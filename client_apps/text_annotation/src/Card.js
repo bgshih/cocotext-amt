@@ -8,7 +8,7 @@ export class Card extends Component {
   componentDidMount() {
     const ctx = this.refs.c.getContext('2d');
     var im = new Image();
-    const imageUrl = "textannot/crop/" + this.props.cropId;
+    const imageUrl = "textannot/crop/" + this.props.textInstanceId;
     im.onload = () => {
       const canvasWidth = this.props.canvasWidth;
       const canvasHeight = this.props.canvasHeight;
@@ -52,7 +52,7 @@ export class Card extends Component {
 Card.propTypes = {
   canvasWidth: PropTypes.number.isRequired,
   canvasHeight: PropTypes.number.isRequired,
-  cropId: PropTypes.string.isRequired,
+  textInstanceId: PropTypes.string.isRequired,
   illegible: PropTypes.bool.isRequired,
   setIllegible: PropTypes.func.isRequired,
   unknownLanguage: PropTypes.bool.isRequired,

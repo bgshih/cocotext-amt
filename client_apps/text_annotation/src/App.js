@@ -14,7 +14,8 @@ class App extends Component {
     this.urlParams = this.parseSearchString(window.location.search.substring(1));
     this.state = {
       cards: [],
-      showInstruction: this.urlParams['assignmentId'] === 'ASSIGNMENT_ID_NOT_AVAILABLE'
+      showInstruction: this.urlParams['assignmentId'] === 'ASSIGNMENT_ID_NOT_AVAILABLE',
+      submitEnabled: this.urlParams['assignmentId'] !== 'ASSIGNMENT_ID_NOT_AVAILABLE',
     }
   }
 
@@ -42,11 +43,11 @@ class App extends Component {
     fetch(fetchUrl)
       .then((response) => response.json())
       .then((taskData) => {
-        const cropIds = taskData['crop_names'];
+        const textInstanceIds = taskData['textInstances'];
         var cards = [];
-        for (var cropId of cropIds) {
+        for (var textInstanceId of textInstanceIds) {
           const card = {
-            cropId: cropId,
+            textInstanceId: textInstanceId,
             textAnnotation: null,
             illegible: false,
             unknownLanguage: false,
@@ -84,7 +85,7 @@ class App extends Component {
       <Col key={index.toString()} xs={4} className="CardColumn">
         <Card canvasWidth={256}
               canvasHeight={256}
-              cropId={ card.cropId }
+              textInstanceId={ card.textInstanceId }
               illegible={ card.illegible }
               setIllegible={ (illegible) =>
                 {
@@ -140,7 +141,7 @@ class App extends Component {
           <Col xs={12} className="Toolbar">
             <Toolbar instructionClicked={() => { this.setState({showInstruction: !this.state.showInstruction}) }}
                      submitClicked={() => { this.submit(); }}
-                     submitEnabled={ false } />
+                     submitEnabled={ this.state.submitEnabled } />
           </Col>
         </Row>
         
