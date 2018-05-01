@@ -41,3 +41,8 @@ def process_qualification_requests():
             qrequest.accept(value=score)
         else:
             qrequest.reject()
+
+
+@task()
+def update_tasks():
+    pass

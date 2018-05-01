@@ -173,4 +173,8 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'textannot.tasks.process_qualification_requests',
         'schedule': crontab(minute='*/5'),
     },
+    'sync-textannot-tasks': {
+        'task': 'textannot.tasks.sync_textannot_tasks',
+        'schedule': crontab(minute='*/15')
+    }
 }

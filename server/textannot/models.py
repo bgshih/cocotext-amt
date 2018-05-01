@@ -21,14 +21,14 @@ class Project(ModelBase):
     def sync(self, skip_completed_tasks=True):
         tasks = self.tasks.filter(completed=False) if skip_completed_tasks == True else \
                 self.tasks.all()
-        print('[1/2] Synching tasks, submissions, responses, and workers')
+        print('[1/2] Sync tasks, submissions, responses, and workers')
         print('Synching {} tasks'.format(tasks.count()))
         for task in tqdm(tasks):
             task.sync()
 
-        print('[2/2] Synching contents')
+        print('[2/2] Update contents')
         pending_contents = self.contents.filter(status='P')
-        print('Syching {} contents'.format(pending_contents.count()))
+        print('Updating {} contents'.format(pending_contents.count()))
         for content in tqdm(pending_contents):
             content.save()
 
@@ -117,7 +117,7 @@ class Task(ModelBase):
                     mturk_worker=a.worker
                 )
                 # create submission
-                submission, created = Submission.objects.get_or_created(
+                submission, created = Submission.objects.get_or_create(
                     assignment=a,
                     task=self,
                     project_worker=project_worker
@@ -182,9 +182,11 @@ class Submission(ModelBase):
     def sync_responses(self):
         assert(self.answer is not None and isinstance(self.answer, list))
         # update responses from the parsed data
-        for response in self.data:
-            instance_id = response['instanceId']
-            text = response['text']
+        for response_json in self.answer:
+            instance_id = response_json['textInstanceId']
+            text = response_json['text']
+            illegible = response_json['illegible']
+            unknownLanguage = response_json['unknownLanguage']
             content = Content.objects.get(text_instance=instance_id)
             # response is only created once
             Response.objects.get_or_create(

@@ -48,7 +48,7 @@ class App extends Component {
         for (var textInstanceId of textInstanceIds) {
           const card = {
             textInstanceId: textInstanceId,
-            textAnnotation: null,
+            text: "",
             illegible: false,
             unknownLanguage: false,
           };
@@ -86,6 +86,18 @@ class App extends Component {
         <Card canvasWidth={256}
               canvasHeight={256}
               textInstanceId={ card.textInstanceId }
+              text={ card.text }
+              setText={ (text) =>
+                {
+                  const newCards = update(
+                    this.state.cards,
+                    {
+                      [index]: {text: {$set: text}}
+                    }
+                  );
+                  this.setState({cards: newCards});
+                }
+              }
               illegible={ card.illegible }
               setIllegible={ (illegible) =>
                 {

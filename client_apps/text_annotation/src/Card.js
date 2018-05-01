@@ -32,7 +32,9 @@ export class Card extends Component {
                 height={ this.props.canvasHeight }
                 className="CardCanvas" />
         <Form className="CardForm">
-          <FormControl type="text" placeholder="Text in the image"/>
+          <FormControl type="text" placeholder="Text in the image"
+                       value={ this.props.text }
+                       onChange={ (e) => { this.props.setText(e.target.value) } }/>
 
           <Checkbox checked={ this.props.illegible }
                     onChange={ () => { this.props.setIllegible(!this.props.illegible); } }>

@@ -42,9 +42,9 @@ export class Toolbar extends Component {
   componentDidMount() {
     document.addEventListener("keypress", (e) => {
       switch(e.key) {
-        case 's':
-          this.props.submitClicked();
-          break;
+        // case 's':
+        //   this.props.submitClicked();
+        //   break;
         default:
           break;
       }
@@ -74,6 +74,5 @@ export class Toolbar extends Component {
 
 Toolbar.propTypes = {
   instructionClicked: PropTypes.func.isRequired,
-  submitClicked: PropTypes.func.isRequired,
   submitEnabled: PropTypes.bool.isRequired
 }
