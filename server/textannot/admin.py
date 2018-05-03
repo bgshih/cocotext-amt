@@ -25,6 +25,14 @@ class ProjectWorkerAdmin(admin.ModelAdmin):
 admin.site.register(ProjectWorker, ProjectWorkerAdmin)
 
 
+class SubmissionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'assignment', 'task', 'project_worker')
+    readonly_fields = ('id', 'assignment', 'task', 'project_worker')
+admin.site.register(Submission, SubmissionAdmin)
+
+
 class ResponseAdmin(admin.ModelAdmin):
     list_display = ('submission', 'content', 'project_worker', 'text', 'sentinel_correct')
+    readonly_fields = ('submission', 'content', 'project_worker', 'text', 'sentinel_correct')
+    list_filter = ('project_worker', )
 admin.site.register(Response, ResponseAdmin)

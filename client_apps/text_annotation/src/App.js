@@ -15,7 +15,8 @@ class App extends Component {
     this.state = {
       cards: [],
       showInstruction: this.urlParams['assignmentId'] === 'ASSIGNMENT_ID_NOT_AVAILABLE',
-      submitEnabled: this.urlParams['assignmentId'] !== 'ASSIGNMENT_ID_NOT_AVAILABLE',
+      hitAccepted: this.urlParams['assignmentId'] !== 'ASSIGNMENT_ID_NOT_AVAILABLE',
+      submitEnableCountDown: 15
     }
   }
 
@@ -36,6 +37,23 @@ class App extends Component {
 
   componentDidMount() {
     this.fetchTaskData();
+    this.startCountDown();
+  }
+
+  startCountDown() {
+    var timerId;
+    timerId = setInterval(
+      () => {
+        if (this.state.submitEnableCountDown > 0) {
+          this.setState({
+            submitEnableCountDown: this.state.submitEnableCountDown - 1
+          });
+        } else {
+          clearInterval(timerId);
+        }
+      },
+      1000
+    );
   }
 
   fetchTaskData() {
@@ -153,7 +171,8 @@ class App extends Component {
           <Col xs={12} className="Toolbar">
             <Toolbar instructionClicked={() => { this.setState({showInstruction: !this.state.showInstruction}) }}
                      submitClicked={() => { this.submit(); }}
-                     submitEnabled={ this.state.submitEnabled } />
+                     hitAccepted={ this.state.hitAccepted }
+                     submitEnableCountDown={ this.state.submitEnableCountDown }/>
           </Col>
         </Row>
         

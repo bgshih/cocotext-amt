@@ -52,27 +52,43 @@ export class Toolbar extends Component {
   }
 
   render() {
-    return (
-      <ButtonToolbar>
-        <ButtonGroup>
-          <ButtonWithTooltip onClick={ this.props.instructionClicked }
-                             tooltipText='Instructions'
-                             glyph='info-sign' />
-        </ButtonGroup>
+    var submitButtonText = "";
+    var submitEnabled = false;
+    if (!this.props.hitAccepted) {
+      submitButtonText = "Accept HIT first"
+    } else if (this.props.submitEnableCountDown > 0) {
+      submitButtonText = "Submission enabled in " + this.props.submitEnableCountDown;
+    } else {
+      submitEnabled = true;
+      submitButtonText = "Submit"
+    }
 
-        <ButtonGroup>
-          <ButtonWithTooltip onClick={ this.props.submitClicked }
-                             disabled={ !this.props.submitEnabled }
-                             buttonStyle='primary'
-                             tooltipText='Finish and Submit (s)'
-                             text={ this.props.submitEnabled ? 'Submit' : 'Accept HIT First'} />
-        </ButtonGroup>
-      </ButtonToolbar>
+    return (
+      <div>
+        <ButtonToolbar>
+          <ButtonGroup>
+            <ButtonWithTooltip onClick={ this.props.instructionClicked }
+                               tooltipText='Instructions'
+                               glyph='info-sign' />
+          </ButtonGroup>
+
+          <ButtonGroup>
+            <ButtonWithTooltip onClick={ this.props.submitClicked }
+                               disabled={ !submitEnabled }
+                               buttonStyle='primary'
+                               tooltipText='Finish and Submit'
+                               text={ submitButtonText } />
+          </ButtonGroup>
+        </ButtonToolbar>
+
+        <p><font size="5">Special symbols: ¢ £ ¤ ¥ ₹ § © « ® ¯ ° ± µ ¶ »</font></p>
+      </div>
     );
   }
 }
 
 Toolbar.propTypes = {
   instructionClicked: PropTypes.func.isRequired,
-  submitEnabled: PropTypes.bool.isRequired
+  hitAccepted: PropTypes.bool.isRequired,
+  submitEnableCountDown: PropTypes.number.isRequired
 }

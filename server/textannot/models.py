@@ -21,18 +21,21 @@ class Project(ModelBase):
     def sync(self, skip_completed_tasks=True):
         tasks = self.tasks.filter(completed=False) if skip_completed_tasks == True else \
                 self.tasks.all()
-        print('[1/2] Sync tasks, submissions, responses, and workers')
+        print('[1/3] Sync tasks, submissions, and responses')
         print('Synching {} tasks'.format(tasks.count()))
         for task in tqdm(tasks):
             task.sync()
 
-        print('[2/2] Update contents')
+        print('[2/3] Update contents')
         pending_contents = self.contents.filter(status='P')
         print('Updating {} contents'.format(pending_contents.count()))
         for content in tqdm(pending_contents):
             content.save()
 
-        print('[2/2] Updating worker statistics')
+        print('[3/3] Updating worker statistics')
+        print('Passed')
+        # for worker in tqdm(self.project_workers.all()):
+        #     worker.save()
 
     def __str__(self):
         return self.name
@@ -193,7 +196,9 @@ class Submission(ModelBase):
                 submission=self,
                 content=content,
                 project_worker=self.project_worker,
-                text=text
+                text=text,
+                illegible=illegible,
+                unknownLanguage=unknownLanguage,
             )
 
     def __str__(self):
@@ -230,7 +235,7 @@ class Content(ModelBase):
         else:
             consensus = None
             text_count = {}
-            for response in self.responses:
+            for response in self.responses.all():
                 if response.text not in text_count:
                     text_count[response.text] = 0
                 text_count[response.text] += 1
@@ -292,6 +297,8 @@ class Response(ModelBase):
         related_name='responses'
     )
     text = models.CharField(max_length=1024)
+    illegible = models.BooleanField(default=False)
+    unknownLanguage = models.BooleanField(default=False)
 
     # return the correctness if responding a sentinel content
     def sentinel_correct(self):
