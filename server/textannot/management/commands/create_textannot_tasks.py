@@ -12,12 +12,12 @@ from django.conf import settings
 from common.models import MturkHitType, MturkHit, QualificationType
 from textannot.models import Project, Task, Content
 
-logging.warning('USING LOCALHOST IN HIT QUESTION, REPLACE IT WITH REMOTE SERVER IN DEPLOYMENT')
+# logging.warning('USING LOCALHOST IN HIT QUESTION, REPLACE IT WITH REMOTE SERVER IN DEPLOYMENT')
 
 HIT_QUESTION = """
 <ExternalQuestion xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2006-07-14/ExternalQuestion.xsd">
-<ExternalURL>https://localhost</ExternalURL>
-<FrameHeight>800</FrameHeight>
+<ExternalURL>https://textannot.bgshi.me</ExternalURL>
+<FrameHeight>1700</FrameHeight>
 </ExternalQuestion>
 """
 
@@ -58,7 +58,7 @@ class Command(BaseCommand):
             help='Include disputed contents')
 
     def handle(self, *args, **options):
-        # self.create_hit_type_v1()
+        # self.create_hit_type()
         project = Project.objects.get(name='TextAnnotation')
         self.create_tasks(
             project=project,
@@ -67,13 +67,13 @@ class Command(BaseCommand):
             include_dispute=options['include_dispute'],
             num_tasks=options['num_tasks'])
 
-    def create_hit_type_v1(self):
+    def create_hit_type(self):
         qtype_test = QualificationType.objects.get(slug='textannot-test-v1')
         hit_type, created = MturkHitType.objects.get_or_create(
-            slug='textannot-v1',
+            slug='textannot-v2',
             auto_approval_delay=timedelta(days=1),
             assignment_duration=timedelta(minutes=30),
-            reward='0.08',
+            reward='0.04',
             title='Annotate text in every image',
             keywords='Transcription,Text,Annotation,Label',
             description='Annotate text in every image',
@@ -106,7 +106,7 @@ class Command(BaseCommand):
             return
 
         project = Project.objects.get(name='TextAnnotation')
-        hit_type = MturkHitType.objects.get(slug='textannot-v1')
+        hit_type = MturkHitType.objects.get(slug='textannot-v2')
 
         for i in range(num_tasks_to_create):
             hit = MturkHit.objects.create(

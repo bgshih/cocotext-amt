@@ -134,7 +134,7 @@ class Task(ModelBase):
             c.save()
 
     # sync with MTurk to update HITs, assignments, submissions, and responses
-    def sync(self, sync_submissions=True, sync_responses=True, sync_contents=True):
+    def sync(self, sync_submissions=True, sync_responses=True, sync_contents=False):
         self.hit.sync(sync_assignments=True)
         if sync_submissions:
             self._sync_submissions(sync_responses=sync_responses)
@@ -282,9 +282,9 @@ class Response(ModelBase):
     
     submission = models.ForeignKey(
         Submission,
-        on_delete=models.CASCADE,
         related_name='responses',
-        null=True
+        null=True,
+        on_delete=models.SET_NULL
     )
     content = models.ForeignKey(
         Content,

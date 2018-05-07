@@ -26,17 +26,18 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '=1k1i!1z9z9dih@e!+fhc(yez4!vxwun6r&q7a^5$ek%j+oyxs'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # Use MTurk development sandbox
-MTURK_SANDBOX = True
+MTURK_SANDBOX = False
 
 # Use a separate database in development
 DATABASE_NAME = 'cocotext_v2'
 
 ALLOWED_HOSTS = [
+    '*'
     # 'amt-api.bgshi.me'
-    '*' if MTURK_SANDBOX else 'bgshi.me'
+    # '*' if MTURK_SANDBOX else 'bgshi.me'
 ]
 
 
@@ -96,7 +97,7 @@ DATABASES = {
         'USER': 'cocotext',
         'PASSWORD': 'w2PtkwRhThtyA',
         'HOST': 'localhost',
-        'PORT': '5433',
+        'PORT': '5432',
     }
 }
 
@@ -173,8 +174,8 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'textannot.tasks.process_qualification_requests',
         'schedule': crontab(minute='*/5'),
     },
-    'sync-textannot-tasks': {
-        'task': 'textannot.tasks.sync_textannot_tasks',
-        'schedule': crontab(minute='*/15')
-    }
+    # 'sync-textannot-tasks': {
+    #     'task': 'textannot.tasks.sync_textannot_tasks',
+    #     'schedule': crontab(minute='*/15')
+    # }
 }

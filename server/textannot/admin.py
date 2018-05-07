@@ -11,6 +11,7 @@ admin.site.register(Project, ProjectAdmin)
 class TaskAdmin(admin.ModelAdmin):
     list_display = ('id', 'hit', 'completed', 'num_submissions_required', 'num_contents', 'num_submissions')
     readonly_fields = ('hit', 'project')
+    list_filter = ('completed',)
 admin.site.register(Task, TaskAdmin)
 
 class ContentAdmin(admin.ModelAdmin):
