@@ -18,13 +18,12 @@ class App extends Component {
   }
 
   fetchData() {
-    const fetchUrl = 'textannot/_view/' + window.location.search;
-    console.log(fetchUrl)
+    const fetchUrl = '/textannot/response/' + window.location.search;
     fetch(fetchUrl)
       .then((response) => response.json())
       .then((responseData) => {
         this.setState({
-          cards: responseData
+          cards: responseData['responses']
         });
       })
       .catch((error) => {
@@ -40,7 +39,8 @@ class App extends Component {
               textInstanceId={ card.textInstanceId }
               text={ card.text }
               illegible={ card.illegible }
-              unknownLanguage={ card.unknownLanguage } />
+              unknownLanguage={ card.unknownLanguage }
+              worker={ card.worker }/>
       </Col>
     )
 

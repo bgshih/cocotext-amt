@@ -47,7 +47,7 @@ def get_crop(request, text_instance):
     image_id, instance_index = (int(s) for s in text_instance.split('-'))
     image_name = 'COCO_train2014_{:012d}'.format(image_id)
     crop_rel_path = '{0}/{0}_{1}.jpg'.format(image_name, instance_index)
-    
+
     try:
         image_path = os.path.join(DATA_ROOT, crop_rel_path)
         return FileResponse(open(image_path, 'rb'))
@@ -62,32 +62,30 @@ def get_crop(request, text_instance):
 
 
 # viewer functions
-def get_responses(request, url, max_length=100):
-    print('url: ' + url)
-    query_params = parse_qs(urlparse(url).query)
-    print('query_params: ' + query_params)
-    if 'worker' in query_params:
-        worker_id = query_params['worker']
+def get_responses(request, url):
+    MAX_LENGTH = 100
+
+    query_dict = request.GET.dict()
+
+    if 'worker' in query_dict:
+        worker_id = query_dict['worker']
         project_worker = MturkWorker.objects.get(id=worker_id).textannot_worker
         responses = project_worker.responses
     else:
         responses = Response.objects.all()
     
-    if 'sort' in query_params:
-        if query_params['sort'] == 'recentfirst':
+    if 'sort' in query_dict:
+        if query_dict['sort'] == 'recentfirst':
             responses = responses.order_by('-added')
 
-    print(responses.count())
-    print(responses[0])
-
-    json_response = []
-    for response in responses[:max_length]:
+    json_response = { 'responses': [] }
+    for response in responses.all()[:MAX_LENGTH]:
         text_instance_id = response.content.text_instance.id
         project_worker = str(response.project_worker)
         text = response.text
         illegible = response.illegible
         unknownLanguage = response.unknownLanguage
-        json_response.append({
+        json_response['responses'].append({
             'textInstanceId': text_instance_id,
             'worker': project_worker,
             'text': text,

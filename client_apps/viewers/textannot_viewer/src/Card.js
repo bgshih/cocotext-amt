@@ -42,6 +42,8 @@ export class Card extends Component {
           <Checkbox checked={ this.props.unknownLanguage }>
             Unknown Language
           </Checkbox>
+
+          <p>Worker: { this.props.worker }</p>
         </Form>
       </Panel>
     )
@@ -54,4 +56,5 @@ Card.propTypes = {
   textInstanceId: PropTypes.string.isRequired,
   illegible: PropTypes.bool.isRequired,
   unknownLanguage: PropTypes.bool.isRequired,
+  worker: PropTypes.string.isRequired
 }
