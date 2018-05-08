@@ -1,10 +1,11 @@
 import os
+from urllib.parse import urlparse, parse_qs
 
 from django.http import JsonResponse, FileResponse
 from django.core.exceptions import ObjectDoesNotExist
 
-from common.models import MturkHit
-from textannot.models import Task
+from common.models import MturkHit, MturkWorker
+from textannot.models import Task, Response
 
 
 def get_task_data(request, hit_id):
@@ -58,3 +59,39 @@ def get_crop(request, text_instance):
         response = HttpResponse(content_type="image/jpeg")
         red.save(response, "JPEG")
         return response
+
+
+# viewer functions
+def get_responses(request, url, max_length=100):
+    print('url: ' + url)
+    query_params = parse_qs(urlparse(url).query)
+    print('query_params: ' + query_params)
+    if 'worker' in query_params:
+        worker_id = query_params['worker']
+        project_worker = MturkWorker.objects.get(id=worker_id).textannot_worker
+        responses = project_worker.responses
+    else:
+        responses = Response.objects.all()
+    
+    if 'sort' in query_params:
+        if query_params['sort'] == 'recentfirst':
+            responses = responses.order_by('-added')
+
+    print(responses.count())
+    print(responses[0])
+
+    json_response = []
+    for response in responses[:max_length]:
+        text_instance_id = response.content.text_instance.id
+        project_worker = str(response.project_worker)
+        text = response.text
+        illegible = response.illegible
+        unknownLanguage = response.unknownLanguage
+        json_response.append({
+            'textInstanceId': text_instance_id,
+            'worker': project_worker,
+            'text': text,
+            'illegible': illegible,
+            'unknownLanguage': unknownLanguage
+        })
+    return JsonResponse(json_response)
