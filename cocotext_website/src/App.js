@@ -2,21 +2,36 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
-import { Grid, Row, Col, Button, ButtonToolbar } from 'react-bootstrap';
+import { Grid, Row, Col } from 'react-bootstrap';
+import { DatasetExplorer } from './DatasetExplorer';
 
 
 class App extends Component {
+
   render() {
+    const featureColumn = (featureTitle, featureText) => (
+      <Col xs={12} md={4} className="FeatureColumn">
+        <h3 className="FeatureTitle">
+          { featureTitle }
+        </h3>
+        <p className="FeatureText">
+          { featureText }
+        </p>
+      </Col>
+    )
+  
     return (
       <div>
         <Grid fluid={true}>
           <Row className="TitleJumbotronRow">
             <Grid fluid={false} className="TitleJumbotron">
               <h1 className="Title">COCO-Text</h1>
-              <p className="Subtitle">A Large-scale scene text dataset, based on MSCOCO</p>
+              <p className="Subtitle">
+                A Large-Scale Scene Text Dataset, Based on <a className="SubtitleLink" href="http://cocodataset.org/">MSCOCO</a>
+              </p>
               <div className="TitleButtonGroup">
-                <Button bsStyle="default" className="TitleButton1">Download V2.0</Button>
-                <Button bsStyle="default">Explore</Button>
+                <button className="TitleButton1">Download v2.0</button>
+                <button className="TitleButton2">Explore</button>
               </div>
             </Grid>
           </Row>
@@ -25,42 +40,41 @@ class App extends Component {
         <Grid>
           <Row>
             <Grid fluid={false}>
-              <Row>
-                <Col xs={12} md={4}>
-                  <h2 className="SummaryTitle">
-                    Large-Scale
-                  </h2>
-                  <p className="SummaryText">
-                    63,686 images, 145,859 text instances.
-                  </p>
-                </Col>
-
-                <Col xs={12} md={4}>
-                  <h2 className="SummaryTitle">
-                    Fine Annotations
-                  </h2>
-                  <p className="SummaryText">
-                    We provide segmentation-level annotations for all words.
-                  </p>
-                </Col>
-
-                <Col xs={12} md={4}>
-                  <h2 className="SummaryTitle">
-                    Attributes
-                  </h2>
-                  <p className="SummaryText">
-                    Three attributes are labeled for every word:
-                    <ul>
-                      <li>Machine-printed / Handwritten</li>
-                      <li>Legible / Illgible</li>
-                      <li>English / non-English</li>
-                    </ul>
-                  </p>
-                </Col>
+              <Row className="FeaturesRow">
+                {
+                  featureColumn(
+                    "Large-Scale",
+                    "63,686 images, 145,859 text instances."
+                  )
+                }
+                {
+                  featureColumn(
+                    "Fine Annotations",
+                    "We provide segmentation-level annotations for all words."
+                  )
+                }
+                { 
+                  featureColumn(
+                    "Attributes",
+                    "Three attributes are labeled for every word: machine-printed vs. handwritten, legible vs. illgible, and English vs. non-English")
+                }
               </Row>
             </Grid>
           </Row>
+
+          <hr />
+
+          <Row>
+            <Col xs={12}>
+              <h2>Dataset Explorer</h2>
+            </Col>
+            <DatasetExplorer />
+          </Row>
+
+          <hr />
+          
         </Grid>
+
       </div>
     );
   }
