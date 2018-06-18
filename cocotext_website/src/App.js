@@ -72,6 +72,13 @@ class App extends Component {
           </Row>
 
           <hr />
+
+          <Row>
+            <Col xs={12}>
+              <h2>Download Annotations</h2>
+              <p></p>
+            </Col>
+          </Row>
           
         </Grid>
 
