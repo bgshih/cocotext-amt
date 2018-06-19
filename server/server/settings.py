@@ -26,7 +26,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '=1k1i!1z9z9dih@e!+fhc(yez4!vxwun6r&q7a^5$ek%j+oyxs'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 # Use MTurk development sandbox
 MTURK_SANDBOX = False

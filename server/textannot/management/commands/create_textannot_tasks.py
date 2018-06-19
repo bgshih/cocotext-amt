@@ -100,6 +100,9 @@ class Command(BaseCommand):
         num_contents = contents.count()
         print('Remaining contents: {}'.format(num_contents))
 
+        # contents change during task creation
+        contents = list(contents.all())
+
         num_tasks_to_create = min(num_contents // num_content_per_task, num_tasks)
         if input('Going to create {} tasks, continue? (y/n) '.format(num_tasks_to_create)) != 'y':
             print('Aborted')
