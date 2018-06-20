@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 import { withStyles } from '@material-ui/core/styles';
@@ -43,7 +43,7 @@ function TextInstanceExpansionPanel(props) {
         <ExpansionPanelDetails>
           <Typography className={classes.details}>
             <ul>
-              <li>{ "Text Annotation: " + textAnnotation }</li>
+              <li>{ "Text: " + textAnnotation }</li>
               <li>{ "Legible: " + (legible ? "True" : "False") }</li>
               <li>{ "Machine Printed: " + (machinePrinted ? "True" : "False") }</li>
               <li>{ "Language: " + language}</li>

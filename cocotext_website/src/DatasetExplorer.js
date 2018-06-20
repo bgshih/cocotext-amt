@@ -1,41 +1,79 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import { Grid, Row, Col } from 'react-bootstrap';
 
-import { ImageViewer } from './ImageViewer';
+import ImageViewer from './ImageViewer';
 import ImageInfoPanel from './ImageInfoPanel';
+import DatasetSearchBar from './DatasetSearchBar';
+
 
 export class DatasetExplorer extends Component {
 
   constructor(props) {
     super(props);
     this.state = {
-      imageId: null,
+      imageId: 0,
+      textInstances: []
     }
   }
 
   componentDidMount() {
-    // WARN: REMOVE LATER
-    this.setState({imageId: 28547});
+    this.setState({imageId: 432218});
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const { imageId } = this.state;
+    if (prevState.imageId !== imageId) {
+      this.fetchAnnotations();
+    }
+  }
+
+  fetchAnnotations() {
+    const { imageId } = this.state;
+    const annotationUrl = "v2_annotations/" + imageId.toString() + ".json";
+    fetch(annotationUrl)
+      .then((response) => response.json())
+      .then((annotJson) => {
+        console.log('Got');
+        this.setState({
+          textInstances: annotJson['text_instances']
+        })
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
   render() {
+    const { imageId, textInstances } = this.state;
+
     return (
       <div className="DatasetExplorer">
         <Grid>
           <Row>
-            <Col xs={8}>
+            <Col xs={12}>
+              <DatasetSearchBar
+                imageId={ imageId }
+                handleReloadButtonClicked={
+                  (value) => { this.setState({imageId: value}) }
+                }
+              />
+            </Col>
+          </Row>
+
+          <Row>
+            <Col lg={8} sm={12}>
               <ImageViewer
                 width={750}
                 height={750}
-                imageId={this.state.imageId}
+                imageId={ imageId }
+                textInstances={ textInstances }
               />
             </Col>
 
-            <Col xs={4}>
-              <p>Image ID: { String(this.state.imageId) }</p>
-              <p>#Instances: { 2 }</p>
-              <ImageInfoPanel />
+            <Col lg={4} sm={12}>
+              <ImageInfoPanel
+                imageId={ imageId }
+                textInstances={ textInstances }/>
             </Col>
           </Row>
         </Grid>
