@@ -12,7 +12,8 @@ export class DatasetExplorer extends Component {
     super(props);
     this.state = {
       imageId: 0,
-      textInstances: []
+      textInstances: [],
+      focusIndex: -1,
     }
   }
 
@@ -33,9 +34,8 @@ export class DatasetExplorer extends Component {
     fetch(annotationUrl)
       .then((response) => response.json())
       .then((annotJson) => {
-        console.log('Got');
         this.setState({
-          textInstances: annotJson['text_instances']
+          textInstances: annotJson['text_instances'],
         })
       })
       .catch((error) => {
@@ -44,7 +44,7 @@ export class DatasetExplorer extends Component {
   }
 
   render() {
-    const { imageId, textInstances } = this.state;
+    const { imageId, textInstances, focusIndex } = this.state;
 
     return (
       <div className="DatasetExplorer">
@@ -54,26 +54,41 @@ export class DatasetExplorer extends Component {
               <DatasetSearchBar
                 imageId={ imageId }
                 handleReloadButtonClicked={
-                  (value) => { this.setState({imageId: value}) }
+                  (value) => {
+                    this.setState({imageId: value, focusIndex: -1});
+                  }
                 }
               />
             </Col>
           </Row>
 
           <Row>
-            <Col lg={8} sm={12}>
+            <Col lg={9} sm={12}>
               <ImageViewer
-                width={750}
-                height={750}
+                width={850}
+                height={850}
                 imageId={ imageId }
                 textInstances={ textInstances }
+                focusIndex={ focusIndex }
+                handleSetFocusIndex={
+                  (index) => {
+                    this.setState({focusIndex: index})
+                  }
+                }
               />
             </Col>
 
-            <Col lg={4} sm={12}>
+            <Col lg={3} sm={12}>
               <ImageInfoPanel
                 imageId={ imageId }
-                textInstances={ textInstances }/>
+                textInstances={ textInstances }
+                focusIndex={ focusIndex }
+                handleSetFocusIndex={
+                  (index) => {
+                    this.setState({focusIndex: index})
+                  }
+                }
+              />
             </Col>
           </Row>
         </Grid>

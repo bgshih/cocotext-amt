@@ -12,11 +12,11 @@ const styles = theme => ({
     marginBottom: 10
   },
   textLabel: {
-    fontSize: 14
+    fontSize: 13,
   },
   textField: {
     // width: 200,
-    fontSize: 14,
+    fontSize: 13,
   },
   button: {
     fontSize: 13

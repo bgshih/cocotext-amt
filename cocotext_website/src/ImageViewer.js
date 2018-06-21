@@ -37,15 +37,25 @@ class ImageViewer extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { imageId, width, height } = this.props;
+    const { imageId, width, height, focusIndex, textInstances } = this.props;
+    const { canvasOffsetLeft, canvasOffsetTop, canvasScale} = this.state;
+    
     if (prevProps.imageId !== imageId ||
         prevProps.width !== width ||
         prevProps.height !== height) {
       this.redrawImage();
-      // this.redrawAnnotations();
+      this.redrawAnnotations();
     }
 
-    this.redrawAnnotations();
+    if (prevProps.width !== width ||
+        prevProps.height !== height ||
+        prevProps.focusIndex !== focusIndex ||
+        prevState.canvasOffsetLeft !== canvasOffsetLeft ||
+        prevState.canvasOffsetTop !== canvasOffsetTop ||
+        prevState.canvasScale !== canvasScale ||
+        JSON.stringify(prevProps.textInstances) !== JSON.stringify(textInstances)) {
+      this.redrawAnnotations();
+    }
   }
 
   redrawImage() {
@@ -85,26 +95,33 @@ class ImageViewer extends Component {
   redrawAnnotations() {
     const polygonFill = "rgba(102, 255, 102, 0.5)";
     const polygonStroke = "rgba(0, 230, 0, 1.0)";
+    const focusPolygonFill = "rgba(255, 255, 0, 0.5)";
+    const focusPolygonStroke = "rgb(230, 230, 0, 1.0)";
 
-    const { textInstances, width, height } = this.props;
+    const { textInstances, width, height, focusIndex } = this.props;
     const { canvasOffsetLeft, canvasOffsetTop, canvasScale } = this.state;
 
     const ctx = this.refs.annotationCanvas.getContext('2d');
     ctx.clearRect(0, 0, width, height);
 
-    for (var textInstance of textInstances) {
-      const points = textInstance.polygon;
+    for (let i = 0; i < textInstances.length; i++) {
+      const points = textInstances[i].polygon;
       if (points.length < 3) {
         continue; // invalid polygon
       }
-      ctx.fillStyle = polygonFill;
-      ctx.strokeStyle = polygonStroke;
+      if (i === focusIndex) {
+        ctx.fillStyle = focusPolygonFill;
+        ctx.strokeStyle = focusPolygonStroke;
+      } else {
+        ctx.fillStyle = polygonFill;
+        ctx.strokeStyle = polygonStroke;
+      }
       ctx.lineWidth = 1;
       ctx.beginPath();
-      for (var i = 0; i < points.length; i++) {
-        const canvasX = canvasOffsetLeft + canvasScale * points[i].x;
-        const canvasY = canvasOffsetTop + canvasScale * points[i].y;
-        if (i === 0) {
+      for (let j = 0; j < points.length; j++) {
+        const canvasX = canvasOffsetLeft + canvasScale * points[j].x;
+        const canvasY = canvasOffsetTop + canvasScale * points[j].y;
+        if (j === 0) {
           ctx.moveTo(canvasX, canvasY);
         } else {
           ctx.lineTo(canvasX, canvasY);

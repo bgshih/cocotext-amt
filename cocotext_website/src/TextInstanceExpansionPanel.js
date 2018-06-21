@@ -32,12 +32,19 @@ const styles = theme => ({
 });
 
 function TextInstanceExpansionPanel(props) {
-  const { classes, instanceId, textAnnotation, legible, machinePrinted, language } = props;
+  const { classes, instanceId, textAnnotation, legible, machinePrinted, language,
+          expanded, panelId, handleSetFocusIndex } = props;
+
   return (
     <div>
-      <ExpansionPanel>
+      <ExpansionPanel
+        expanded={expanded}
+        onChange={ () => {
+          const newFocusIndex = expanded ? -1 : panelId;
+          handleSetFocusIndex(newFocusIndex);
+        } }>
         <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography className={classes.heading}>{ "Instance " + instanceId }</Typography>
+          <Typography className={classes.heading}>{ "Instance " + panelId }</Typography>
           <Typography className={classes.secondaryHeading}>{ '"' + textAnnotation + '"' }</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
@@ -57,6 +64,9 @@ function TextInstanceExpansionPanel(props) {
 
 TextInstanceExpansionPanel.propTypes = {
   classes: PropTypes.object.isRequired,
+  panelId: PropTypes.number.isRequired,
+  expanded: PropTypes.bool.isRequired,
+  handleSetFocusIndex: PropTypes.func.isRequired,
   instanceId: PropTypes.string.isRequired,
   legible: PropTypes.bool.isRequired,
   machinePrinted: PropTypes.bool.isRequired,

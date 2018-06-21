@@ -17,10 +17,11 @@ const styles = theme => ({
   }
 })
 
+
 class ImageInfoPanel extends Component {
 
   render() {
-    const { classes, imageId, textInstances } = this.props;
+    const { classes, imageId, textInstances, focusIndex, handleSetFocusIndex } = this.props;
 
     return (
       <div>
@@ -31,13 +32,16 @@ class ImageInfoPanel extends Component {
           Number of instances: { textInstances.length }
         </p>
         <hr className={ classes.hr } />
-        {textInstances.map(instance => (
+        {textInstances.map((instance, index) => (
           <TextInstanceExpansionPanel
             instanceId={ instance.instanceId }
+            panelId={ index }
             textAnnotation={ instance.text }
             legible={ instance.legible }
             machinePrinted={ instance.machinePrinted }
             language={ instance.unknownLanguage ? "non-English" : "English" }
+            expanded={ focusIndex === index }
+            handleSetFocusIndex={ handleSetFocusIndex }
           />
         ))}
 
@@ -49,7 +53,9 @@ class ImageInfoPanel extends Component {
 ImageInfoPanel.propTypes = {
   classes: PropTypes.object.isRequired,
   imageId: PropTypes.number.isRequired,
-  textInstances: PropTypes.arrayOf(PropTypes.object)
+  textInstances: PropTypes.arrayOf(PropTypes.object),
+  focusIndex: PropTypes.number.isRequired,
+  handleSetFocusIndex: PropTypes.func.isRequired,
 };
 
 export default withStyles(styles)(ImageInfoPanel);
