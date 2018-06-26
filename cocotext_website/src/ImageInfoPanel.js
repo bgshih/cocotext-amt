@@ -37,7 +37,7 @@ class ImageInfoPanel extends Component {
             instanceId={ instance.instanceId }
             panelId={ index }
             textAnnotation={ instance.text }
-            legible={ instance.legible }
+            legible={ !instance.illegible }
             machinePrinted={ instance.machinePrinted }
             language={ instance.unknownLanguage ? "non-English" : "English" }
             expanded={ focusIndex === index }

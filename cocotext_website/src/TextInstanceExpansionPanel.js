@@ -32,8 +32,10 @@ const styles = theme => ({
 });
 
 function TextInstanceExpansionPanel(props) {
-  const { classes, instanceId, textAnnotation, legible, machinePrinted, language,
+  const { classes, textAnnotation, legible, machinePrinted, language,
           expanded, panelId, handleSetFocusIndex } = props;
+
+  const textDisplay = (legible && language === "English") ? ('"' + textAnnotation + '"') : "-";
 
   return (
     <div>
@@ -45,12 +47,12 @@ function TextInstanceExpansionPanel(props) {
         } }>
         <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
           <Typography className={classes.heading}>{ "Instance " + panelId }</Typography>
-          <Typography className={classes.secondaryHeading}>{ '"' + textAnnotation + '"' }</Typography>
+          <Typography className={classes.secondaryHeading}>{ textDisplay }</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
           <Typography className={classes.details}>
             <ul>
-              <li>{ "Text: " + textAnnotation }</li>
+              <li>{ "Text: " + textDisplay }</li>
               <li>{ "Legible: " + (legible ? "True" : "False") }</li>
               <li>{ "Machine Printed: " + (machinePrinted ? "True" : "False") }</li>
               <li>{ "Language: " + language}</li>
