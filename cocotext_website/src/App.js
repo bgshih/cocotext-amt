@@ -3,6 +3,7 @@ import './App.css';
 
 import { Grid, Row, Col } from 'react-bootstrap';
 import { DatasetExplorer } from './DatasetExplorer';
+import { CssBaseline } from '@material-ui/core';
 
 
 class App extends Component {

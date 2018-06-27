@@ -45,7 +45,7 @@ export class DatasetExplorer extends Component {
         })
         console.log('Image list length: ' + imageListJson['imageList'].length);
       })
-      // .then(() => {this.setImageIndexById(432218);})
+      .then(() => {this.setImageIndexById(432218);})
       .catch((error) => {
         console.error(error);
       });
@@ -132,7 +132,7 @@ export class DatasetExplorer extends Component {
           </Row>
 
           <Row>
-            <Col lg={9} sm={12}>
+            <Col lg={8} sm={12}>
               <ImageViewer
                 width={850}
                 height={850}
@@ -147,7 +147,7 @@ export class DatasetExplorer extends Component {
               />
             </Col>
 
-            <Col lg={3} sm={12}>
+            <Col lg={4} sm={12}>
               <ImageInfoPanel
                 imageId={ imageId }
                 textInstances={ textInstances }

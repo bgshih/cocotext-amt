@@ -20,6 +20,10 @@ const styles = theme => ({
 
 class ImageInfoPanel extends Component {
 
+  correctInstance() {
+    
+  }
+
   render() {
     const { classes, imageId, textInstances, focusIndex, handleSetFocusIndex } = this.props;
 
