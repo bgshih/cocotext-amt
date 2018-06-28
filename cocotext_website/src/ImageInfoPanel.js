@@ -40,12 +40,12 @@ class ImageInfoPanel extends Component {
           <TextInstanceExpansionPanel
             instanceId={ instance.instanceId }
             panelId={ index }
-            textAnnotation={ instance.text }
-            legible={ !instance.illegible }
-            machinePrinted={ instance.machinePrinted }
-            language={ instance.unknownLanguage ? "non-English" : "English" }
             expanded={ focusIndex === index }
             handleSetFocusIndex={ handleSetFocusIndex }
+            text={ instance.text }
+            legibilityLabel={ instance.legibility }
+            classLabel={ instance.class }
+            languageLabel={ instance.language }
           />
         ))}
 

@@ -104,10 +104,10 @@ class Command(BaseCommand):
                 for point in ct_instance.polygon:
                     mask.append(point['x'])
                     mask.append(point['y'])
-                legibility = response.illegible if response is not None else True
-                legibility_label = 0 if legibility == True else 1
-                unknownLanguage = response.unknownLanguage if response is not None else False,
-                language_label = 0 if not unknownLanguage else 1
+                illegible = response.illegible if response is not None else False
+                legibility_label = 0 if illegible == False else 1
+                unknownLanguage = response.unknownLanguage if response is not None else False
+                language_label = 0 if unknownLanguage == False else 1
                 class_label = 0 # not labeled yet, default to machine printed
                 text_instance_json = {
                     'mask': mask,

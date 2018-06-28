@@ -127,8 +127,8 @@ class ImageViewer extends Component {
     ctx.clearRect(0, 0, width, height);
 
     for (let i = 0; i < textInstances.length; i++) {
-      const points = textInstances[i].polygon;
-      if (points.length < 3) {
+      const points = textInstances[i].mask;
+      if (points.length < 6) {
         continue; // invalid polygon
       }
       if (i === focusIndex) {
@@ -140,9 +140,9 @@ class ImageViewer extends Component {
       }
       ctx.lineWidth = 1;
       ctx.beginPath();
-      for (let j = 0; j < points.length; j++) {
-        const canvasX = canvasOffsetLeft + canvasScale * points[j].x;
-        const canvasY = canvasOffsetTop + canvasScale * points[j].y;
+      for (let j = 0; j < points.length / 2; j++) {
+        const canvasX = canvasOffsetLeft + canvasScale * points[2*j];
+        const canvasY = canvasOffsetTop + canvasScale * points[2*j+1];
         if (j === 0) {
           ctx.moveTo(canvasX, canvasY);
         } else {

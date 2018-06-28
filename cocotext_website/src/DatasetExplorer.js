@@ -12,7 +12,7 @@ export class DatasetExplorer extends Component {
     super(props);
     this.state = {
       imageId: -1,
-      imageList: [],
+      imageIdList: [],
       imageIndex: -1,
       textInstances: [],
       focusIndex: -1,
@@ -20,30 +20,29 @@ export class DatasetExplorer extends Component {
   }
 
   componentDidMount() {
-    this.fetchImageList();
+    this.fetchImageIdList();
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { imageId, imageIndex, imageList } = this.state;
+    const { imageId, imageIndex, imageIdList } = this.state;
     if (prevState.imageId !== imageId) {
       this.fetchAnnotations();
     }
 
     if (prevState.imageIndex !== imageIndex) {
-      const newImageId = imageList[imageIndex];
+      const newImageId = imageIdList[imageIndex];
       this.setState({imageId: newImageId});
     }
   }
 
-  fetchImageList() {
-    const imageListUrl = "image_list.json";
-    fetch(imageListUrl)
+  fetchImageIdList() {
+    const imageIdListUrl = "image_list.min.json";
+    fetch(imageIdListUrl)
       .then((response) => response.json())
       .then((imageListJson) => {
         this.setState({
-          imageList: imageListJson['imageList']
+          imageIdList: imageListJson['image_list_min']
         })
-        console.log('Image list length: ' + imageListJson['imageList'].length);
       })
       .then(() => {this.setImageIndexById(432218);})
       .catch((error) => {
@@ -53,12 +52,12 @@ export class DatasetExplorer extends Component {
 
   fetchAnnotations() {
     const { imageId } = this.state;
-    const annotationUrl = "v2_annotations/" + imageId.toString() + ".json";
+    const annotationUrl = "v3/" + imageId.toString() + ".json";
     fetch(annotationUrl)
       .then((response) => response.json())
       .then((annotJson) => {
         this.setState({
-          textInstances: annotJson['text_instances'],
+          textInstances: annotJson['annotations'],
         })
       })
       .catch((error) => {
@@ -67,8 +66,8 @@ export class DatasetExplorer extends Component {
   }
 
   handleKeyPress(event) {
-    const { imageIndex, focusIndex, imageList, textInstances } = this.state;
-    const numberOfImages = imageList.length;
+    const { imageIndex, focusIndex, imageIdList, textInstances } = this.state;
+    const numberOfImages = imageIdList.length;
     const numberOfInstances = textInstances.length;
 
     if (numberOfImages === 0) {
@@ -105,8 +104,8 @@ export class DatasetExplorer extends Component {
   }
 
   setImageIndexById(imageId) {
-    const { imageList } = this.state;
-    const imageIndex = imageList.findIndex((id) => (id == imageId));
+    const { imageIdList } = this.state;
+    const imageIndex = imageIdList.findIndex((id) => (id === imageId));
     this.setState({
       imageIndex: imageIndex
     });

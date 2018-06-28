@@ -7,14 +7,10 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import { Button, FormControl, Input, InputLabel, Select, MenuItem } from '@material-ui/core';
+import { FormControl, Input, InputLabel, Select, MenuItem } from '@material-ui/core';
 
-import TextInstanceCorrectionDialog from './TextInstanceCorrectionDialog';
 
 const styles = theme => ({
-  // root: {
-  //   width: '100%',
-  // },
   heading: {
     fontSize: 13,
     flexBasis: '40%',
@@ -39,9 +35,7 @@ const styles = theme => ({
   },
   form: {
     width: 250,
-    // height: 30,
     marginLeft: 10,
-    // marginRight:,
     marginBottom: 20,
   },
 });
@@ -50,17 +44,13 @@ class TextInstanceExpansionPanel extends Component {
 
   constructor(props) {
     super(props);
-    this.state = {
-      correctionModalOn: false,
-    }
   }
 
   render() {
-    const { classes, textAnnotation, legible, machinePrinted, language,
+    const { classes, text, legibilityLabel, languageLabel, classLabel,
             expanded, panelId, handleSetFocusIndex } = this.props;
-    const { correctionModalOn } = this.state;
 
-    const textDisplay = (legible && language === "English") ? ('"' + textAnnotation + '"') : "-";
+    const textDisplay = (legibilityLabel === 0) ? ('"' + text + '"') : "-";
 
     return (
       <div>
@@ -78,7 +68,7 @@ class TextInstanceExpansionPanel extends Component {
             <Typography className={classes.details}>
               <FormControl className={classes.form}>
                 <InputLabel className={classes.textField}>Text</InputLabel>
-                <Input className={classes.textField} value={textAnnotation === "" ? "<None>" : textAnnotation} disabled={true} />
+                <Input className={classes.textField} value={text === "" ? "<None>" : text} disabled={true} />
               </FormControl>
 
               <FormControl className={classes.form}>
@@ -116,12 +106,6 @@ class TextInstanceExpansionPanel extends Component {
             </Typography>
           </ExpansionPanelDetails>
         </ExpansionPanel>
-
-        <TextInstanceCorrectionDialog
-          open={expanded && correctionModalOn}
-          handleClosed={() => {
-            this.setState({correctionModalOn: false})}
-          } />
       </div>
     );
   }
@@ -133,9 +117,10 @@ TextInstanceExpansionPanel.propTypes = {
   expanded: PropTypes.bool.isRequired,
   handleSetFocusIndex: PropTypes.func.isRequired,
   instanceId: PropTypes.string.isRequired,
-  legible: PropTypes.bool.isRequired,
-  machinePrinted: PropTypes.bool.isRequired,
-  language: PropTypes.string.isRequired,
+  text: PropTypes.string.isRequired,
+  legibilityLabel: PropTypes.number.isRequired,
+  classLabel: PropTypes.number.isRequired,
+  languageLabel: PropTypes.number.isRequired,
 };
 
 export default withStyles(styles)(TextInstanceExpansionPanel);
