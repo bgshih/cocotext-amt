@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import update from 'immutability-helper';
 
 import { withStyles } from '@material-ui/core/styles';
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
@@ -7,7 +8,7 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import { FormControl, Input, InputLabel, Select, MenuItem } from '@material-ui/core';
+import { FormControl, Input, InputLabel, Select, MenuItem, Button } from '@material-ui/core';
 
 
 const styles = theme => ({
@@ -27,7 +28,7 @@ const styles = theme => ({
   details: {
     fontSize: 13
   },
-  correctButton: {
+  button: {
     fontSize: 13,
   },
   textField: {
@@ -44,13 +45,28 @@ class TextInstanceExpansionPanel extends Component {
 
   constructor(props) {
     super(props);
+
+    const annotationJson = JSON.stringify(props.annotation);
+    const annotationCopy = JSON.parse(annotationJson);
+    this.state = {
+      correctMode: false,
+      annotationCopy: annotationCopy,
+    }
+  }
+
+  cancelCorrection() {
+    const originalAnnotation = JSON.parse(JSON.stringify(this.props.annotation));
+    this.setState({
+      annotationCopy: originalAnnotation,
+      correctMode: false,
+    });
   }
 
   render() {
-    const { classes, text, legibilityLabel, languageLabel, classLabel,
-            expanded, panelId, handleSetFocusIndex } = this.props;
-
-    const textDisplay = (legibilityLabel === 0) ? ('"' + text + '"') : "-";
+    const { classes, expanded, panelId, handleSetFocusIndex } = this.props;
+    const { correctMode } = this.state;
+    const { text, legibility, language, type } = this.state.annotationCopy;
+    const textDisplay = (legibility === 0 && language === 0) ? ('"' + text + '"') : "-";
 
     return (
       <div>
@@ -60,28 +76,60 @@ class TextInstanceExpansionPanel extends Component {
             const newFocusIndex = expanded ? -1 : panelId;
             handleSetFocusIndex(newFocusIndex);
           } }>
+
           <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
             <Typography className={classes.heading}>{ "Instance " + panelId }</Typography>
             <Typography className={classes.secondaryHeading}>{ textDisplay }</Typography>
           </ExpansionPanelSummary>
+
           <ExpansionPanelDetails>
             <Typography className={classes.details}>
               <FormControl className={classes.form}>
-                <InputLabel className={classes.textField}>Text</InputLabel>
-                <Input className={classes.textField} value={text === "" ? "<None>" : text} disabled={true} />
+                <InputLabel className={classes.textField} shrink={true}>Text</InputLabel>
+                <Input
+                  className={classes.textField}
+                  value={text}
+                  disabled={!correctMode}
+                  onChange={(e) => {
+                    const newAnnotationCopy = update(this.state.annotationCopy, {
+                      text: {$set: e.target.value},
+                    });
+                    this.setState({annotationCopy: newAnnotationCopy});
+                  }}
+                />
               </FormControl>
 
               <FormControl className={classes.form}>
-                <InputLabel className={classes.textField}>Legibility</InputLabel>
-                <Select className={classes.textField} value={0} disabled={true}>
+                <InputLabel className={classes.textField} shrink={true}>Legibility</InputLabel>
+                <Select
+                  className={classes.textField}
+                  value={legibility}
+                  disabled={!correctMode}
+                  onChange={(e) => {
+                    const newAnnotationCopy = update(this.state.annotationCopy, {
+                      legibility: {$set: e.target.value},
+                    });
+                    this.setState({annotationCopy: newAnnotationCopy});
+                  }}
+                >
                   <MenuItem className={classes.textField} value={0}>Legible</MenuItem>
                   <MenuItem className={classes.textField} value={1}>Illegible</MenuItem>
                 </Select>
               </FormControl>
 
               <FormControl className={classes.form}>
-                <InputLabel className={classes.textField}>Class</InputLabel>
-                <Select className={classes.textField} value={0} disabled={true}>
+                <InputLabel className={classes.textField}>Type</InputLabel>
+                <Select
+                  className={classes.textField}
+                  value={type}
+                  disabled={!correctMode}
+                  onChange={(e) => {
+                    const newAnnotationCopy = update(this.state.annotationCopy, {
+                      type: {$set: e.target.value},
+                    });
+                    this.setState({annotationCopy: newAnnotationCopy});
+                  }}
+                >
                   <MenuItem className={classes.textField} value={0}>Machine Printed</MenuItem>
                   <MenuItem className={classes.textField} value={1}>Handwritten</MenuItem>
                 </Select>
@@ -89,20 +137,44 @@ class TextInstanceExpansionPanel extends Component {
 
               <FormControl className={classes.form}>
                 <InputLabel className={classes.textField}>Language</InputLabel>
-                <Select className={classes.textField} value={0} disabled={true}>
+                <Select
+                  className={classes.textField}
+                  value={language}
+                  disabled={!correctMode}
+                  onChange={(e) => {
+                    const newAnnotationCopy = update(this.state.annotationCopy, {
+                      language: {$set: e.target.value},
+                    });
+                    this.setState({annotationCopy: newAnnotationCopy});
+                  }}
+                >
                   <MenuItem className={classes.textField} value={0}>English</MenuItem>
                   <MenuItem className={classes.textField} value={1}>non-English</MenuItem>
                 </Select>
               </FormControl>
 
-              {/* <Button
-                className={classes.correctButton}
-                variant="contained"
+              <Button
+                className={classes.button}
                 onClick={() => {
-                  this.setState({correctionModalOn: true})
+                  this.setState({correctMode: true})
                 }}>
                 Correct
-              </Button> */}
+              </Button>
+
+              {correctMode &&
+                <Button
+                  className={classes.button}>
+                  Submit
+                </Button>
+              }
+              {correctMode &&
+                <Button
+                  className={classes.button}
+                  onClick={() => {this.cancelCorrection();}}>
+                  Cancel
+                </Button>
+              }
+
             </Typography>
           </ExpansionPanelDetails>
         </ExpansionPanel>
@@ -117,10 +189,12 @@ TextInstanceExpansionPanel.propTypes = {
   expanded: PropTypes.bool.isRequired,
   handleSetFocusIndex: PropTypes.func.isRequired,
   instanceId: PropTypes.string.isRequired,
-  text: PropTypes.string.isRequired,
-  legibilityLabel: PropTypes.number.isRequired,
-  classLabel: PropTypes.number.isRequired,
-  languageLabel: PropTypes.number.isRequired,
+  annotation: PropTypes.shape({
+    text: PropTypes.string.isRequired,
+    legibility: PropTypes.number.isRequired,
+    class: PropTypes.number.isRequired,
+    language: PropTypes.number.isRequired,
+  }),
 };
 
 export default withStyles(styles)(TextInstanceExpansionPanel);

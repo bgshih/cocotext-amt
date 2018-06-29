@@ -42,10 +42,7 @@ class ImageInfoPanel extends Component {
             panelId={ index }
             expanded={ focusIndex === index }
             handleSetFocusIndex={ handleSetFocusIndex }
-            text={ instance.text }
-            legibilityLabel={ instance.legibility }
-            classLabel={ instance.class }
-            languageLabel={ instance.language }
+            annotation={ instance }
           />
         ))}
 
@@ -57,7 +54,12 @@ class ImageInfoPanel extends Component {
 ImageInfoPanel.propTypes = {
   classes: PropTypes.object.isRequired,
   imageId: PropTypes.number.isRequired,
-  textInstances: PropTypes.arrayOf(PropTypes.object),
+  textInstances: PropTypes.arrayOf(PropTypes.shape({
+    text: PropTypes.string,
+    legibility: PropTypes.number,
+    class: PropTypes.number,
+    language: PropTypes.number,
+  })),
   focusIndex: PropTypes.number.isRequired,
   handleSetFocusIndex: PropTypes.func.isRequired,
 };
