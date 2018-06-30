@@ -113,7 +113,7 @@ class Command(BaseCommand):
                     'mask': mask,
                     'text': response.text if response is not None else '',
                     'legibility': legibility_label,
-                    'class': class_label,
+                    'type': class_label,
                     'language': language_label,
                 }
                 annotation_json['annotations'].append(text_instance_json)
