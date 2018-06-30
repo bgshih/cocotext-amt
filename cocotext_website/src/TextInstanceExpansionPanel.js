@@ -62,6 +62,25 @@ class TextInstanceExpansionPanel extends Component {
     });
   }
 
+  submit() {
+    fetch('/correction', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(this.state.annotationCopy)    
+    })
+    .then(() => {
+      this.setState({
+        correctMode: false,
+      })
+    })
+    .catch((error) => {
+      console.log(error)
+    });
+  }
+
   render() {
     const { classes, expanded, panelId, handleSetFocusIndex } = this.props;
     const { correctMode } = this.state;
@@ -155,6 +174,7 @@ class TextInstanceExpansionPanel extends Component {
 
               <Button
                 className={classes.button}
+                color="primary"
                 onClick={() => {
                   this.setState({correctMode: true})
                 }}>
@@ -163,13 +183,16 @@ class TextInstanceExpansionPanel extends Component {
 
               {correctMode &&
                 <Button
-                  className={classes.button}>
+                  className={classes.button}
+                  color="secondary"
+                  onClick={() => {this.submit();}}>
                   Submit
                 </Button>
               }
               {correctMode &&
                 <Button
                   className={classes.button}
+                  color="secondary"
                   onClick={() => {this.cancelCorrection();}}>
                   Cancel
                 </Button>

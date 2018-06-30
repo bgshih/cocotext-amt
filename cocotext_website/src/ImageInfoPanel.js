@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { withStyles } from '@material-ui/core/styles';
+import { Button } from '@material-ui/core';
 
 import TextInstanceExpansionPanel from './TextInstanceExpansionPanel.js';
 
@@ -14,6 +15,9 @@ const styles = theme => ({
   hr: {
     marginTop: 10,
     marginBottom: 10
+  },
+  button: {
+    fontSize: 13,
   }
 })
 
@@ -29,12 +33,19 @@ class ImageInfoPanel extends Component {
 
     return (
       <div>
-      <p className={ classes.panelHead }>
+        <p className={ classes.panelHead }>
           Image: { imageId }
         </p>
         <p className={ classes.panelHead }>
           Number of instances: { textInstances.length }
         </p>
+        <Button
+          className={classes.button}
+          color="secondary"
+          onClick={() => {this.reportImage();}}>
+          Report Image
+        </Button>
+
         <hr className={ classes.hr } />
         {textInstances.map((instance, index) => (
           <TextInstanceExpansionPanel
