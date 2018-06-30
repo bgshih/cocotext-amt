@@ -24,10 +24,6 @@ const styles = theme => ({
 
 class ImageInfoPanel extends Component {
 
-  correctInstance() {
-    
-  }
-
   render() {
     const { classes, imageId, textInstances, focusIndex, handleSetFocusIndex } = this.props;
 
@@ -49,7 +45,6 @@ class ImageInfoPanel extends Component {
         <hr className={ classes.hr } />
         {textInstances.map((instance, index) => (
           <TextInstanceExpansionPanel
-            instanceId={ instance.instanceId }
             panelId={ index }
             expanded={ focusIndex === index }
             handleSetFocusIndex={ handleSetFocusIndex }
@@ -66,6 +61,7 @@ ImageInfoPanel.propTypes = {
   classes: PropTypes.object.isRequired,
   imageId: PropTypes.number.isRequired,
   textInstances: PropTypes.arrayOf(PropTypes.shape({
+    instance_id: PropTypes.string,
     text: PropTypes.string,
     legibility: PropTypes.number,
     class: PropTypes.number,

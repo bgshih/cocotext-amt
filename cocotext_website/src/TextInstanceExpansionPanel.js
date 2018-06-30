@@ -16,6 +16,7 @@ const styles = theme => ({
     fontSize: 13,
     flexBasis: '40%',
     flexShrink: 0,
+    marginRight: 10,
   },
   secondaryHeading: {
     // fontSize: theme.typography.pxToRem(20),
@@ -62,14 +63,15 @@ class TextInstanceExpansionPanel extends Component {
     });
   }
 
-  submit() {
+  submitCorrections() {
+    const { annotationCopy } = this.state;
     fetch('/correction', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(this.state.annotationCopy)    
+      body: JSON.stringify(annotationCopy)
     })
     .then(() => {
       this.setState({
@@ -84,7 +86,7 @@ class TextInstanceExpansionPanel extends Component {
   render() {
     const { classes, expanded, panelId, handleSetFocusIndex } = this.props;
     const { correctMode } = this.state;
-    const { text, legibility, language, type } = this.state.annotationCopy;
+    const { instance_id, text, legibility, language, type } = this.state.annotationCopy;
     const textDisplay = (legibility === 0 && language === 0) ? ('"' + text + '"') : "-";
 
     return (
@@ -97,7 +99,7 @@ class TextInstanceExpansionPanel extends Component {
           } }>
 
           <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography className={classes.heading}>{ "Instance " + panelId }</Typography>
+            <Typography className={classes.heading}>{ "Instance " + instance_id }</Typography>
             <Typography className={classes.secondaryHeading}>{ textDisplay }</Typography>
           </ExpansionPanelSummary>
 
@@ -185,7 +187,7 @@ class TextInstanceExpansionPanel extends Component {
                 <Button
                   className={classes.button}
                   color="secondary"
-                  onClick={() => {this.submit();}}>
+                  onClick={() => {this.submitCorrections();}}>
                   Submit
                 </Button>
               }
@@ -211,8 +213,8 @@ TextInstanceExpansionPanel.propTypes = {
   panelId: PropTypes.number.isRequired,
   expanded: PropTypes.bool.isRequired,
   handleSetFocusIndex: PropTypes.func.isRequired,
-  instanceId: PropTypes.string.isRequired,
   annotation: PropTypes.shape({
+    instance_id: PropTypes.string.isRequired,
     text: PropTypes.string.isRequired,
     legibility: PropTypes.number.isRequired,
     class: PropTypes.number.isRequired,
