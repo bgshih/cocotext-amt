@@ -3,7 +3,8 @@ import { Grid, Row, Col } from 'react-bootstrap';
 
 import ImageViewer from './ImageViewer';
 import ImageInfoPanel from './ImageInfoPanel';
-import DatasetSearchBar from './DatasetSearchBar';
+// import DatasetSearchBar from './DatasetSearchBar';
+import DatasetNavigationBar from './DatasetNavigationBar';
 
 
 export class DatasetExplorer extends Component {
@@ -40,11 +41,17 @@ export class DatasetExplorer extends Component {
     fetch(imageIdListUrl)
       .then((response) => response.json())
       .then((imageListJson) => {
+        let imageIdList = imageListJson['image_list_min'];
+        imageIdList.sort();
         this.setState({
-          imageIdList: imageListJson['image_list_min']
+          imageIdList: imageIdList
         })
       })
-      .then(() => {this.setImageIndexById(432218);})
+      .then(() => {
+        this.setState({
+          imageIndex: 0,
+        })
+      })
       .catch((error) => {
         console.error(error);
       });
@@ -73,8 +80,6 @@ export class DatasetExplorer extends Component {
     if (numberOfImages === 0) {
       return;
     }
-
-    console.log(event.key);
 
     switch(event.key) {
       case '{':
@@ -112,7 +117,8 @@ export class DatasetExplorer extends Component {
   }
 
   render() {
-    const { textInstances, focusIndex, imageId } = this.state;
+    const { textInstances, focusIndex, imageId, imageIndex } = this.state;
+    const numberOfImages = this.state.imageIdList.length;
 
     return (
       <div className="DatasetExplorer" onKeyPress={this.handleKeyPress.bind(this)} tabIndex="0">
@@ -129,6 +135,30 @@ export class DatasetExplorer extends Component {
               />
             </Col>
           </Row> */}
+
+          <Row>
+            <Col xs={12}>
+              <DatasetNavigationBar
+                imageIndex={imageIndex}
+                numberOfImages={numberOfImages}
+                handleGoToPreviousImage={() => {
+                  this.setState({
+                    imageIndex: Math.max(0, imageIndex - 1),
+                  });
+                }}
+                handleGoToNextImage={() => {
+                  this.setState({
+                    imageIndex: Math.min(numberOfImages - 1, imageIndex + 1),
+                  });
+                }}
+                handleGoToIndex={(index) => {
+                  this.setState({
+                    imageIndex: Math.max(0, Math.min(numberOfImages - 1, index)),
+                  })
+                }}
+              />
+            </Col>
+          </Row>
 
           <Row>
             <Col lg={8} sm={12}>
