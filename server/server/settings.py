@@ -53,7 +53,8 @@ INSTALLED_APPS = [
     'common.apps.CommonConfig',
     'polyverif.apps.PolyverifConfig',
     'polyannot.apps.PolyannotConfig',
-    'textannot.apps.TextannotConfig'
+    'textannot.apps.TextannotConfig',
+    'corrections.apps.CorrectionsConfig',
 ]
 
 MIDDLEWARE = [

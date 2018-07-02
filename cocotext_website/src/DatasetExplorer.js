@@ -117,7 +117,7 @@ export class DatasetExplorer extends Component {
     return (
       <div className="DatasetExplorer" onKeyPress={this.handleKeyPress.bind(this)} tabIndex="0">
         <Grid>
-          <Row>
+          {/* <Row>
             <Col xs={12}>
               <DatasetSearchBar
                 imageId={ imageId }
@@ -128,7 +128,7 @@ export class DatasetExplorer extends Component {
                 }
               />
             </Col>
-          </Row>
+          </Row> */}
 
           <Row>
             <Col lg={8} sm={12}>

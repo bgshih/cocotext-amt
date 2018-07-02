@@ -22,7 +22,7 @@ class App extends Component {
   
     return (
       <div>
-        <Grid fluid={true}>
+        {/* <Grid fluid={true}>
           <Row className="TitleJumbotronRow">
             <Grid fluid={false} className="TitleJumbotron">
               <h1 className="Title">COCO-Text</h1>
@@ -35,10 +35,10 @@ class App extends Component {
               </div>
             </Grid>
           </Row>
-        </Grid>
+        </Grid> */}
 
         <Grid>
-          <Row>
+          {/* <Row>
             <Grid fluid={false}>
               <Row className="FeaturesRow">
                 {
@@ -62,7 +62,7 @@ class App extends Component {
             </Grid>
           </Row>
 
-          <hr />
+          <hr /> */}
 
           <Row>
             <Col xs={12}>
@@ -73,12 +73,12 @@ class App extends Component {
 
           <hr />
 
-          <Row>
+          {/* <Row>
             <Col xs={12}>
               <h2>Download Annotations</h2>
               <p></p>
             </Col>
-          </Row>
+          </Row> */}
           
         </Grid>
 

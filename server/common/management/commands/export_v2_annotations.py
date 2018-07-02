@@ -110,6 +110,7 @@ class Command(BaseCommand):
                 language_label = 0 if unknownLanguage == False else 1
                 class_label = 0 # not labeled yet, default to machine printed
                 text_instance_json = {
+                    'instance_id': ct_instance.id,
                     'mask': mask,
                     'text': response.text if response is not None else '',
                     'legibility': legibility_label,

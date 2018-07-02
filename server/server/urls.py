@@ -17,6 +17,7 @@ from django.conf.urls import include, url
 from django.contrib import admin
 
 from common import text_instance
+from corrections import corrections
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -24,5 +25,6 @@ urlpatterns = [
     url(r'^textins/(.+)/crop/polygon/$', text_instance.get_text_instance_polygon_in_crop),
     url(r'^polyverif/', include('polyverif.urls')),
     url(r'^polyannot/', include('polyannot.urls')),
-    url(r'^textannot/', include('textannot.urls'))
+    url(r'^textannot/', include('textannot.urls')),
+    url(r'^corrections/', corrections.save_correction),
 ]

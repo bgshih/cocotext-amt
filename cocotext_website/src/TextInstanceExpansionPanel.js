@@ -65,7 +65,7 @@ class TextInstanceExpansionPanel extends Component {
 
   submitCorrections() {
     const { annotationCopy } = this.state;
-    fetch('/correction', {
+    fetch('/corrections/', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
