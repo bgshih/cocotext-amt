@@ -3,11 +3,16 @@ import PropTypes from 'prop-types';
 
 import { withStyles } from '@material-ui/core/styles';
 import { Button } from '@material-ui/core';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import TextInstanceExpansionPanel from './TextInstanceExpansionPanel.js';
 
 
 const styles = theme => ({
+  container: {
+    height: 1000,
+    overflowY: "scroll",
+  },
   panelHead: {
     fontSize: 13,
     marginBottom: 5
@@ -45,23 +50,40 @@ class ImageInfoPanel extends Component {
       })
     })
     .then(() => {
-      this.setState({
-        imageReported: true,
-      });
+      if (imageId === this.props.imageId) {
+        this.setState({
+          imageReported: true,
+        });
+      }
     })
     .catch((error) => {
       console.log(error);
     });
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    const { imageId } = this.props;
+    if (imageId !== prevProps.imageId) {
+      this.setState({imageReported: false});
+    }
+  }
+
   render() {
     const { imageReported } = this.state;
     const { classes, imageId, textInstances, focusIndex, handleSetFocusIndex } = this.props;
 
+    if (textInstances === null) {
+      return (
+        <div>
+          <CircularProgress className={classes.progress} size={50} />
+        </div>
+      );
+    }
+
     return (
-      <div>
+      <div className={ classes.container }>
         <p className={ classes.panelHead }>
-          Image: { imageId }
+          Image ID: { imageId }
         </p>
         <p className={ classes.panelHead }>
           Number of instances: { textInstances.length }
@@ -84,6 +106,7 @@ class ImageInfoPanel extends Component {
         {textInstances.map((instance, index) => (
           <TextInstanceExpansionPanel
             panelId={ index }
+            key={ index }
             expanded={ focusIndex === index }
             handleSetFocusIndex={ handleSetFocusIndex }
             annotation={ instance }
@@ -99,11 +122,11 @@ ImageInfoPanel.propTypes = {
   classes: PropTypes.object.isRequired,
   imageId: PropTypes.number.isRequired,
   textInstances: PropTypes.arrayOf(PropTypes.shape({
-    instance_id: PropTypes.string,
-    text: PropTypes.string,
-    legibility: PropTypes.number,
-    class: PropTypes.number,
-    language: PropTypes.number,
+    instance_id: PropTypes.string.isRequired,
+    text: PropTypes.string.isRequired,
+    legibility: PropTypes.number.isRequired,
+    type: PropTypes.number.isRequired,
+    language: PropTypes.number.isRequired,
   })),
   focusIndex: PropTypes.number.isRequired,
   handleSetFocusIndex: PropTypes.func.isRequired,

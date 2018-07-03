@@ -1,24 +1,36 @@
 import React, { Component } from 'react';
-import './App.css';
+import PropTypes from 'prop-types';
 
 import { Grid, Row, Col } from 'react-bootstrap';
-import { DatasetExplorer } from './DatasetExplorer';
-import { CssBaseline } from '@material-ui/core';
+import { withStyles } from '@material-ui/core/styles';
+
+import DatasetExplorer from './DatasetExplorer';
+
+import './App.css';
+
+
+const styles = theme => ({
+  container: {
+    minWidth: 1500,
+  }
+});
 
 
 class App extends Component {
 
   render() {
-    const featureColumn = (featureTitle, featureText) => (
-      <Col xs={12} md={4} className="FeatureColumn">
-        <h3 className="FeatureTitle">
-          { featureTitle }
-        </h3>
-        <p className="FeatureText">
-          { featureText }
-        </p>
-      </Col>
-    )
+    const { classes } = this.props;
+
+    // const featureColumn = (featureTitle, featureText) => (
+    //   <Col xs={12} md={4} className="FeatureColumn">
+    //     <h3 className="FeatureTitle">
+    //       { featureTitle }
+    //     </h3>
+    //     <p className="FeatureText">
+    //       { featureText }
+    //     </p>
+    //   </Col>
+    // )
   
     return (
       <div>
@@ -37,7 +49,7 @@ class App extends Component {
           </Row>
         </Grid> */}
 
-        <Grid>
+        <Grid className={classes.container}>
           {/* <Row>
             <Grid fluid={false}>
               <Row className="FeaturesRow">
@@ -71,7 +83,7 @@ class App extends Component {
             <DatasetExplorer />
           </Row>
 
-          <hr />
+          {/* <hr /> */}
 
           {/* <Row>
             <Col xs={12}>
@@ -87,4 +99,8 @@ class App extends Component {
   }
 }
 
-export default App;
+App.propTypes = {
+  classes: PropTypes.object.isRequired,
+}
+
+export default withStyles(styles)(App);

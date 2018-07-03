@@ -14,7 +14,7 @@ import { FormControl, Input, InputLabel, Select, MenuItem, Button } from '@mater
 const styles = theme => ({
   heading: {
     fontSize: 13,
-    flexBasis: '40%',
+    flexBasis: '50%',
     flexShrink: 0,
     marginRight: 10,
   },
@@ -24,15 +24,13 @@ const styles = theme => ({
     color: theme.palette.text.secondary,
     textOverflow: "ellipsis",
     overflow: "hidden",
-    width: "60%"
-  },
-  details: {
-    fontSize: 13
+    width: "50%"
   },
   button: {
     fontSize: 13,
   },
   textField: {
+    width: 200,
     fontSize: 13,
   },
   form: {
@@ -104,7 +102,7 @@ class TextInstanceExpansionPanel extends Component {
           </ExpansionPanelSummary>
 
           <ExpansionPanelDetails>
-            <Typography className={classes.details}>
+            <div>
               <FormControl className={classes.form}>
                 <InputLabel className={classes.textField} shrink={true}>Text</InputLabel>
                 <Input
@@ -199,8 +197,7 @@ class TextInstanceExpansionPanel extends Component {
                   Cancel
                 </Button>
               }
-
-            </Typography>
+            </div>
           </ExpansionPanelDetails>
         </ExpansionPanel>
       </div>
@@ -217,7 +214,7 @@ TextInstanceExpansionPanel.propTypes = {
     instance_id: PropTypes.string.isRequired,
     text: PropTypes.string.isRequired,
     legibility: PropTypes.number.isRequired,
-    class: PropTypes.number.isRequired,
+    type: PropTypes.number.isRequired,
     language: PropTypes.number.isRequired,
   }),
 };

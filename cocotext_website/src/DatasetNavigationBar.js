@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Input } from '@material-ui/core';
+import { Button, Input, Switch } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
@@ -28,7 +28,7 @@ class DatasetNavigationBar extends React.Component {
 
   render() {
     const { goToIndex } = this.state;
-    const { classes, imageIndex, numberOfImages,
+    const { classes, imageIndex, numberOfImages, showAnnotations, handleSetShowAnnotations,
             handleGoToPreviousImage, handleGoToNextImage, handleGoToIndex } = this.props;
 
     return (
@@ -57,7 +57,7 @@ class DatasetNavigationBar extends React.Component {
             const inputStr = e.target.value;
             if (!isNaN(inputStr)) {
               this.setState({
-                goToIndex: parseInt(inputStr),
+                goToIndex: parseInt(inputStr, 10),
               });
             }
           }}/>
@@ -72,6 +72,11 @@ class DatasetNavigationBar extends React.Component {
           color="secondary">
           Go
         </Button>
+
+        <Switch
+          checked={showAnnotations}
+          onChange={(e) => {handleSetShowAnnotations(e.target.checked)}} />
+        <span>Show Annotations</span>
       </div>
     )
   }
@@ -84,6 +89,8 @@ DatasetNavigationBar.propTypes = {
   handleGoToPreviousImage: PropTypes.func.isRequired,
   handleGoToNextImage: PropTypes.func.isRequired,
   handleGoToIndex: PropTypes.func.isRequired,
+  showAnnotations: PropTypes.bool.isRequired,
+  handleSetShowAnnotations: PropTypes.func.isRequired,
 };
 
 export default withStyles(styles)(DatasetNavigationBar);
