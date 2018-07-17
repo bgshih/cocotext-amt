@@ -37,6 +37,11 @@ h2 {
   margin-bottom: 32px!important;
 }
 
+pre {
+  display: block;
+  white-space: pre-wrap;
+}
+
 .TitleJumbotronRow {
   background: rgb(36, 36, 36);
   padding-top: 130px;

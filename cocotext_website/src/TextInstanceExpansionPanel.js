@@ -172,7 +172,7 @@ class TextInstanceExpansionPanel extends Component {
                 </Select>
               </FormControl>
 
-              <Button
+              {/* <Button
                 className={classes.button}
                 color="primary"
                 onClick={() => {
@@ -196,7 +196,7 @@ class TextInstanceExpansionPanel extends Component {
                   onClick={() => {this.cancelCorrection();}}>
                   Cancel
                 </Button>
-              }
+              } */}
             </div>
           </ExpansionPanelDetails>
         </ExpansionPanel>

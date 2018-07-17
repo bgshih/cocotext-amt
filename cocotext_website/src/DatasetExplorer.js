@@ -11,7 +11,6 @@ import DatasetNavigationBar from './DatasetNavigationBar';
 
 const styles = theme => ({
   container: {
-    minWidth: 1500,
   }
 });
 
@@ -59,7 +58,7 @@ export class DatasetExplorer extends Component {
       })
       .then(() => {
         this.setState({
-          imageIndex: 0,
+          imageIndex: 26186,
         })
       })
       .catch((error) => {
@@ -184,10 +183,8 @@ export class DatasetExplorer extends Component {
           </Row>
 
           <Row>
-            <Col lg={9} sm={12}>
+            <Col lg={8} sm={12}>
               <ImageViewer
-                width={850}
-                height={850}
                 imageId={ imageId }
                 textInstances={ textInstances }
                 focusIndex={ focusIndex }
@@ -200,7 +197,7 @@ export class DatasetExplorer extends Component {
               />
             </Col>
 
-            <Col lg={3} sm={12}>
+            <Col lg={4} sm={12}>
               <ImageInfoPanel
                 imageId={ imageId }
                 textInstances={ textInstances }

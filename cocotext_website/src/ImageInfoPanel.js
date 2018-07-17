@@ -10,8 +10,8 @@ import TextInstanceExpansionPanel from './TextInstanceExpansionPanel.js';
 
 const styles = theme => ({
   container: {
-    height: 1000,
-    overflowY: "scroll",
+    // maxHeight: 800,
+    // overflowY: "scroll",
   },
   panelHead: {
     fontSize: 13,
@@ -88,7 +88,7 @@ class ImageInfoPanel extends Component {
         <p className={ classes.panelHead }>
           Number of instances: { textInstances.length }
         </p>
-        {imageReported ?
+        {/* {imageReported ?
           (
             <p>Image reported</p>
           ):
@@ -100,7 +100,7 @@ class ImageInfoPanel extends Component {
               Report Image
             </Button>
           )
-        }
+        } */}
 
         <hr className={ classes.hr } />
         {textInstances.map((instance, index) => (

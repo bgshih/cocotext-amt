@@ -11,9 +11,36 @@ import './App.css';
 
 const styles = theme => ({
   container: {
-    minWidth: 1500,
+    // minWidth: 1500,
   }
 });
+
+const ANNOTATION_FORMAT_STR = `\
+{
+  "images": [
+    {
+      "id": int,
+      "filename": string,
+      "width": int,
+      "height": int,
+      "set": 0 (train) | 1 (val) | 2 (test),
+    },
+    ...
+  ],
+  "annotations": [
+    {
+      "id": int,
+      "imageId": int,
+      "mask": [x1, y1, x2, y2, ..., xn, yn] (coordinates of polygon vertices),
+      "text": str,
+      "legibility": 0 (legible) | 1 (illgible),
+      "type": 0 (machine-printed) | 1 (handwritten),
+      "language": 0 (English) | 1 (not English),
+    },
+    ...
+  ]
+}
+`
 
 
 class App extends Component {
@@ -21,20 +48,20 @@ class App extends Component {
   render() {
     const { classes } = this.props;
 
-    // const featureColumn = (featureTitle, featureText) => (
-    //   <Col xs={12} md={4} className="FeatureColumn">
-    //     <h3 className="FeatureTitle">
-    //       { featureTitle }
-    //     </h3>
-    //     <p className="FeatureText">
-    //       { featureText }
-    //     </p>
-    //   </Col>
-    // )
+    const featureColumn = (featureTitle, featureText) => (
+      <Col xs={12} md={4} className="FeatureColumn">
+        <h3 className="FeatureTitle">
+          { featureTitle }
+        </h3>
+        <p className="FeatureText">
+          { featureText }
+        </p>
+      </Col>
+    )
   
     return (
       <div>
-        {/* <Grid fluid={true}>
+        <Grid fluid={true}>
           <Row className="TitleJumbotronRow">
             <Grid fluid={false} className="TitleJumbotron">
               <h1 className="Title">COCO-Text</h1>
@@ -47,22 +74,22 @@ class App extends Component {
               </div>
             </Grid>
           </Row>
-        </Grid> */}
+        </Grid>
 
         <Grid className={classes.container}>
-          {/* <Row>
+          <Row>
             <Grid fluid={false}>
               <Row className="FeaturesRow">
                 {
                   featureColumn(
                     "Large-Scale",
-                    "63,686 images, 145,859 text instances."
+                    "COCO-Text V2.0 contains 63,686 images with 239,506 annotated text instances."
                   )
                 }
                 {
                   featureColumn(
-                    "Fine Annotations",
-                    "We provide segmentation-level annotations for all words."
+                    "Mask Annotations",
+                    "Segmentation mask is annotated for every word, allowing fine-level detection."
                   )
                 }
                 { 
@@ -74,23 +101,52 @@ class App extends Component {
             </Grid>
           </Row>
 
-          <hr /> */}
+          <hr />
 
           <Row>
             <Col xs={12}>
               <h2>Dataset Explorer</h2>
             </Col>
             <DatasetExplorer />
+            <Col xs={12}>
+              <p><i>NOTE: Test images not included</i></p>
+            </Col>
           </Row>
 
-          {/* <hr /> */}
+          <hr />
 
-          {/* <Row>
+          <Row>
             <Col xs={12}>
-              <h2>Download Annotations</h2>
+              <h2>Download</h2>
+              <p>Train+Validation annotations: <a href="">cocotext_v3.trainval.zip [20 MB]</a> (xxx train, xxx validation)</p>
+              <p>By downloading the annotations, you agree to our <a href="">Terms of Use</a>.</p>
+
+              <p>The annotation file is a single JSON with the following format:</p>
+              <pre>
+                { ANNOTATION_FORMAT_STR }
+              </pre>
+
+              <p>The images are the 2014 train images of MSCOCO. They can be downloaded separately at the <a href="http://cocodataset.org/#download">MSCOCO website</a>.</p>
+            </Col>
+          </Row>
+
+          <hr/>
+
+          <Row>
+            <Col xs={12}>
+              <h2>API</h2>
+              <p>Please use the updated (v2.0) <a href="">COCO-Text Evaluation Toolbox</a> for parsing annotations and evaluating results. Refer to the repository for usage.</p>
+            </Col>
+          </Row>
+
+          <hr/>
+
+          <Row>
+            <Col xs={12}>
+              <h2>Terms of Use</h2>
               <p></p>
             </Col>
-          </Row> */}
+          </Row>
           
         </Grid>
 
