@@ -118,14 +118,8 @@ class App extends Component {
           <Row>
             <Col xs={12}>
               <h2>Download</h2>
-              <p>Train+Validation annotations: <a href="">cocotext_v3.trainval.zip [20 MB]</a> (xxx train, xxx validation)</p>
+              <p>Train+Validation annotations: <a href="/cocotext.v3.zip">cocotext_v3.trainval.zip [12 MB]</a></p>
               <p>By downloading the annotations, you agree to our <a href="">Terms of Use</a>.</p>
-
-              <p>The annotation file is a single JSON with the following format:</p>
-              <pre>
-                { ANNOTATION_FORMAT_STR }
-              </pre>
-
               <p>The images are the 2014 train images of MSCOCO. They can be downloaded separately at the <a href="http://cocodataset.org/#download">MSCOCO website</a>.</p>
             </Col>
           </Row>
@@ -135,7 +129,7 @@ class App extends Component {
           <Row>
             <Col xs={12}>
               <h2>API</h2>
-              <p>Please use the updated (v2.0) <a href="">COCO-Text Evaluation Toolbox</a> for parsing annotations and evaluating results. Refer to the repository for usage.</p>
+              <p>Please use the updated (v2.0) <a href="https://github.com/bgshih/coco-text">COCO-Text Evaluation Toolbox</a> for parsing annotations and evaluating results. Refer to the repository for usage.</p>
             </Col>
           </Row>
 
