@@ -48,6 +48,17 @@ pre {
   padding-bottom: 130px;
 }
 
+.FooterRow {
+  background: rgb(36, 36, 36);
+  margin-top: 100px;
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+.Footer {
+  color: #cad6d6;
+}
+
 .Title {
   font-weight: bolder;
   color: #23d8d8;

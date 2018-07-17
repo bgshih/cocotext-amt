@@ -69,8 +69,14 @@ class App extends Component {
                 A Large-Scale Scene Text Dataset, Based on <a className="SubtitleLink" href="http://cocodataset.org/">MSCOCO</a>
               </p>
               <div className="TitleButtonGroup">
-                <button className="TitleButton1">Download v2.0</button>
-                <button className="TitleButton2">Explore</button>
+                <button className="TitleButton1" onClick={() => {
+                  window.location.href='#h2-download';
+                }}>
+                  Download v2.0
+                </button>
+                <button className="TitleButton2" onClick={() => {   
+                  window.location.href='#h2-explorer';
+                }}>Explore</button>
               </div>
             </Grid>
           </Row>
@@ -105,11 +111,11 @@ class App extends Component {
 
           <Row>
             <Col xs={12}>
-              <h2>Dataset Explorer</h2>
+              <h2 id="h2-explorer">Dataset Explorer</h2>
             </Col>
             <DatasetExplorer />
             <Col xs={12}>
-              <p><i>NOTE: Test images not included</i></p>
+              <p><i>NOTE: Test images are not included in this explorer.</i></p>
             </Col>
           </Row>
 
@@ -117,9 +123,9 @@ class App extends Component {
 
           <Row>
             <Col xs={12}>
-              <h2>Download</h2>
+              <h2 id="h2-download">Download</h2>
               <p>Train+Validation annotations: <a href="/cocotext.v3.zip">cocotext_v3.trainval.zip [12 MB]</a></p>
-              <p>By downloading the annotations, you agree to our <a href="">Terms of Use</a>.</p>
+              <p>By downloading the annotations, you agree to our <a href="#h2-tou">Terms of Use</a>.</p>
               <p>The images are the 2014 train images of MSCOCO. They can be downloaded separately at the <a href="http://cocodataset.org/#download">MSCOCO website</a>.</p>
             </Col>
           </Row>
@@ -137,11 +143,19 @@ class App extends Component {
 
           <Row>
             <Col xs={12}>
-              <h2>Terms of Use</h2>
-              <p></p>
+              <h2 id="h2-tou">Terms of Use</h2>
+              <p>The annotations in this dataset belong to the <a href="https://vision.cornell.edu/se3/">SE(3) Computer Vision Group at Cornell Tech</a> and are licensed under a <a href="https://creativecommons.org/licenses/by/4.0/legalcode">Creative Commons Attribution 4.0 License</a>.</p>
             </Col>
           </Row>
           
+        </Grid>
+
+        <Grid fluid={true}>
+          <Row className="FooterRow">
+            <Grid fluid={false}>
+              <p className="Footer">Copyright Ⓒ 2018 • <a href="https://vision.cornell.edu/se3/">SE(3) Computer Vision Group at Cornell Tech</a></p>
+            </Grid>
+          </Row>
         </Grid>
 
       </div>
